@@ -6,7 +6,7 @@ Content Orbit to wewnętrzna aplikacja webowa dla firmy Kryptonum, zaprojektowan
 
 Główny przepływ pracy w aplikacji opiera się na trzyetapowym procesie:
 
-1.  Temat: Użytkownik wybiera istniejący temat, wpisuje go ręcznie lub generuje przy pomocy AI.
+1.  Temat: Użytkownik wybiera istniejący temat, wpisuje go ręcznie lub wybiera z listy propozycji wygenerowanych przez AI.
 2.  Podtematy: Na podstawie wybranego tematu, AI masowo generuje propozycje podtematów, uwzględniając bazę wiedzy firmy i preferencje użytkownika.
 3.  Koncepty: Dla zaakceptowanych podtematów, system automatycznie i w tle generuje kompletne koncepty (tytuł, opis, struktura nagłówków, meta dane SEO), które stają się szkieletem dla finalnych artykułów.
 
@@ -35,7 +35,7 @@ Głównym problemem, który rozwiązuje Content Orbit, jest niska efektywność 
 ### 3.3. Rdzeń Aplikacji - Przepływ Tworzenia Treści
 
 - Proces rozpoczyna się na stronie głównej, gdzie użytkownik ma do wyboru dwie opcje: "Nowy temat" lub "Wybierz istniejący".
-- Wybór tematu (ręczny, AI lub z bazy) przenosi użytkownika do widoku generowania podtematów.
+- Wybór tematu (ręczny, z listy wygenerowanej przez AI lub z bazy) przenosi użytkownika do widoku generowania podtematów.
 - AI generuje listę propozycji podtematów na podstawie tematu, bazy wiedzy i preferencji. Użytkownik może akceptować, odrzucać lub dodawać własne propozycje.
 - Po zatwierdzeniu podtematów, aplikacja przechodzi do widoku generowania konceptów. System generuje koncepty w tle, w kolejkach po 3 na raz, aby nie obciążać systemu.
 - Generowanie konceptów odbywa się w tle i jest kontynuowane nawet, jeśli użytkownik przejdzie na inną podstronę w ramach aplikacji. Proces zostanie przerwany tylko w przypadku odświeżenia lub zamknięcia strony. System ostrzeże użytkownika przed wykonaniem takiej akcji.
@@ -56,7 +56,7 @@ Głównym problemem, który rozwiązuje Content Orbit, jest niska efektywność 
 ### 3.5. Personalizacja i Zarządzanie Ustawieniami
 
 - Użytkownicy będą mieli dedykowaną podstronę "Opcje".
-- Na tej stronie będą mogli zarządzać globalnymi preferencjami (np. "Pisz wesołym tonem"), które będą używane przez AI.
+- Na tej stronie będą mogli zarządzać globalnymi preferencjami (np. "Pisz wesołym tonem"), które będą używane przez AI, a także konfigurować parametry liczbowe procesów generatywnych (np. liczbę generowanych tematów i podtematów).
 - Użytkownicy mogą tworzyć, edytować i usuwać własne, niestandardowe "audyty", które są zapisanymi promptami AI do wielokrotnego użytku.
 
 ### 3.6. Integracja z Sanity CMS
@@ -123,14 +123,14 @@ Następujące funkcje i elementy nie wchodzą w zakres wersji MVP (Minimum Viabl
 
 ### ID: US-004
 
-- Tytuł: Generowanie tematu przez AI
-- Opis: Jako użytkownik, chcę mieć możliwość wygenerowania propozycji nowego tematu przez AI, która analizuje moje istniejące klastry, aby zaproponować tematy uzupełniające moją strategię contentową.
+- Tytuł: Masowe generowanie tematów przez AI
+- Opis: Jako użytkownik, chcę mieć możliwość wygenerowania listy propozycji nowych tematów przez AI, która analizuje moje istniejące klastry, aby zaproponować tematy uzupełniające moją strategię contentową.
 - Kryteria akceptacji:
   - Na stronie głównej znajduje się przycisk "Nowy temat", który otwiera pop-up.
   - W pop-upie jest opcja "Generuj z AI".
-  - Po kliknięciu AI generuje jeden, trafny temat i go wyświetla.
-  - Użytkownik może zaakceptować wygenerowany temat, co rozpoczyna proces generowania podtematów.
-  - Użytkownik może odrzucić propozycję i wygenerować nową.
+  - Po kliknięciu AI generuje listę X tematów (ilość X jest zdefiniowana w opcjach globalnych) i ją wyświetla.
+  - Użytkownik może wybrać jeden z wygenerowanych tematów, co rozpoczyna proces generowania podtematów.
+  - Użytkownik może odrzucić wszystkie propozycje i wygenerować nową listę.
 
 ### ID: US-005
 
@@ -276,10 +276,11 @@ Następujące funkcje i elementy nie wchodzą w zakres wersji MVP (Minimum Viabl
 ### ID: US-018
 
 - Tytuł: Zarządzanie globalnymi preferencjami i audytami
-- Opis: Jako użytkownik, chcę mieć centralne miejsce (stronę "Opcje"), gdzie mogę definiować, edytować i usuwać moje globalne preferencje dotyczące stylu pisania AI oraz tworzyć własne, niestandardowe audyty.
+- Opis: Jako użytkownik, chcę mieć centralne miejsce (stronę "Opcje"), gdzie mogę definiować, edytować i usuwać moje globalne preferencje dotyczące stylu pisania AI, ustawiać parametry generowania (np. liczbę tematów i podtematów) oraz tworzyć własne, niestandardowe audyty.
 - Kryteria akceptacji:
   - W nawigacji aplikacji znajduje się link do strony "Opcje".
   - Na stronie mogę zarządzać listą globalnych preferencji (dodawać, edytować, usuwać).
+  - Na stronie mogę zdefiniować domyślną liczbę tematów i podtematów do wygenerowania przez AI.
   - Na stronie mogę zarządzać listą moich niestandardowych audytów (nazwa + prompt).
   - Zmiany zapisane w tym miejscu są automatycznie uwzględniane w procesach generowania AI.
 

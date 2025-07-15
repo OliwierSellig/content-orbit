@@ -26,3 +26,9 @@ CI/CD i Hosting:
 
 - Github Actions do tworzenia pipeline’ów CI/CD
 - Cloudflare Hosting dla hostowania aplikacji
+
+Testowanie:
+
+- Vitest: Framework do testów jednostkowych i integracyjnych
+- React Testing Library: Biblioteka do testowania komponentów React
+- Playwright: Framework do testów E2E i regresji wizualnej

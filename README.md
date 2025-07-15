@@ -1,94 +1,87 @@
-# 10x Astro Starter
+# Content Orbit
 
-A modern, opinionated starter template for building fast, accessible, and AI-friendly web applications.
+Content Orbit is an internal web application for Kryptonum, designed to optimize and scale the SEO content creation process. The application aims to solve the challenge of rapidly generating a large number (up to 100 per week) of high-quality, SEO-optimized articles to significantly improve the company's website search engine rankings.
 
-## Tech Stack
+## ✨ Key Features
 
-- [Astro](https://astro.build/) v5.5.5 - Modern web framework for building fast, content-focused websites
-- [React](https://react.dev/) v19.0.0 - UI library for building interactive components
-- [TypeScript](https://www.typescriptlang.org/) v5 - Type-safe JavaScript
-- [Tailwind CSS](https://tailwindcss.com/) v4.0.17 - Utility-first CSS framework
+- **🤖 AI-Powered Content Generation:** Streamline content creation with a three-step workflow: Topic -> Subtopics -> Concepts.
+- ** scalability Massive Scalability:** Generate up to 100 article concepts per week.
+- **✍️ Advanced Editor:** Edit and refine articles with a Markdown editor and AI chat assistance.
+- **🔄 Seamless Sanity CMS Integration:** Push finished articles to Sanity CMS with a single click.
+- **👤 Personalized Experience:** Each user has their own isolated data, including topic clusters, articles, and AI preferences.
+- **🔍 Custom Audits:** Create and save custom AI prompts to run repeatable content audits.
 
-## Prerequisites
+## 🛠️ Tech Stack
 
-- Node.js v22.14.0 (as specified in `.nvmrc`)
-- npm (comes with Node.js)
+### Frontend
 
-## Getting Started
+- **[Astro 5](https://astro.build/):** UI framework for building fast, content-driven websites.
+- **[React 19](https://react.dev/):** Library for building interactive user interfaces.
+- **[TypeScript 5](https://www.typescriptlang.org/):** Statically typed superset of JavaScript.
+- **[Tailwind CSS 4](https://tailwindcss.com/):** A utility-first CSS framework for rapid UI development.
+- **[Shadcn/ui](https://ui.shadcn.com/):** Re-usable components built using Radix UI and Tailwind CSS.
 
-1. Clone the repository:
+### Backend
 
-```bash
-git clone https://github.com/przeprogramowani/10x-astro-starter.git
-cd 10x-astro-starter
-```
+- **[Supabase](https://supabase.com/):** The open-source Firebase alternative for building secure and scalable backends.
+  - PostgreSQL Database
+  - Authentication
+  - Auto-generated APIs
 
-2. Install dependencies:
+### Artificial Intelligence
 
-```bash
-npm install
-```
+- **[OpenRouter.ai](https://openrouter.ai/):** Access a wide range of AI models (OpenAI, Anthropic, Google, etc.) to ensure high efficiency and cost-effectiveness.
 
-3. Run the development server:
+### Integrations
 
-```bash
-npm run dev
-```
+- **[Sanity CMS](https://www.sanity.io/):** The target content management system for exporting articles.
 
-4. Build for production:
+### CI/CD & Hosting
 
-```bash
-npm run build
-```
+- **[GitHub Actions](https://github.com/features/actions):** For creating CI/CD pipelines.
+- **[Cloudflare Pages](https://pages.cloudflare.com/):** For hosting the application.
 
-## Available Scripts
+### Testing
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
-- `npm run lint:fix` - Fix ESLint issues
+- **[Vitest](https://vitest.dev/):** A blazing fast unit-test framework.
+- **[React Testing Library](https://testing-library.com/docs/react-testing-library/intro/):** For testing React components.
+- **[Playwright](https://playwright.dev/):** For end-to-end and visual regression testing.
 
-## Project Structure
+## 🚀 Getting Started
 
-```md
-.
-├── src/
-│   ├── layouts/    # Astro layouts
-│   ├── pages/      # Astro pages
-│   │   └── api/    # API endpoints
-│   ├── components/ # UI components (Astro & React)
-│   └── assets/     # Static assets
-├── public/         # Public assets
-```
+To get a local copy up and running, follow these simple steps.
 
-## AI Development Support
+### Prerequisites
 
-This project is configured with AI development tools to enhance the development experience, providing guidelines for:
+- Node.js v18 or later
+- npm
 
-- Project structure
-- Coding practices
-- Frontend development
-- Styling with Tailwind
-- Accessibility best practices
-- Astro and React guidelines
+### Installation
 
-### Cursor IDE
+1.  **Clone the repository:**
 
-The project includes AI rules in `.cursor/rules/` directory that help Cursor IDE understand the project structure and provide better code suggestions.
+    ```sh
+    git clone https://github.com/your-username/content-orbit.git
+    cd content-orbit
+    ```
 
-### GitHub Copilot
+2.  **Install NPM packages:**
 
-AI instructions for GitHub Copilot are available in `.github/copilot-instructions.md`
+    ```sh
+    npm install
+    ```
 
-### Windsurf
+3.  **Set up environment variables:**
+    Create a `.env` file in the root of the project and add the necessary environment variables for connecting to your Supabase development instance.
 
-The `.windsurfrules` file contains AI configuration for Windsurf.
+    ```env
+    PUBLIC_SUPABASE_URL="YOUR_SUPABASE_URL"
+    PUBLIC_SUPABASE_ANON_KEY="YOUR_SUPABASE_ANON_KEY"
+    ```
 
-## Contributing
+4.  **Run the development server:**
+    ```sh
+    npm run dev
+    ```
 
-Please follow the AI guidelines and coding practices defined in the AI configuration files when contributing to this project.
-
-## License
-
-MIT
+Open [http://localhost:4321](http://localhost:4321) with your browser to see the result.
