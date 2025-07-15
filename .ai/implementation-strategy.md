@@ -78,18 +78,28 @@ Niniejszy dokument przedstawia zrewidowaną, wysokopoziomową strategię wdroże
 
 ---
 
-## Faza 5: Integracja z Usługami AI
+## Faza 5: Integracja z Usługami AI i Wyszukiwaniem Semantycznym
 
-**Cel:** Zastąpienie mockowanych odpowiedzi AI prawdziwą integracją z OpenRouter.
+**Cel:** Zastąpienie mockowanych odpowiedzi AI prawdziwą integracją z OpenRouter oraz wdrożenie wyszukiwania semantycznego za pomocą `pgvector` w celu dostarczania trafnego kontekstu.
 
 **Kroki:**
 
-1.  **Implementacja Klienta OpenRouter:**
-    - Stworzenie serwisu do komunikacji z API OpenRouter.
-2.  **Podłączenie do API Routes:**
-    - Zastąpienie funkcji mockujących w endpointach API prawdziwymi wywołaniami do OpenRouter.
-3.  **Testowanie i Walidacja:**
-    - Ręczne przetestowanie przepływów generowania treści w celu weryfikacji jakości i spójności odpowiedzi od AI.
+1.  **Konfiguracja `pgvector`:**
+    - Aktywacja rozszerzenia `pgvector` w bazach danych Supabase (`dev` i `staging`).
+    - Modyfikacja odpowiednich tabel (np. `articles`) w celu dodania kolumny typu `vector`.
+2.  **Implementacja Klienta OpenRouter:**
+    - Stworzenie serwisu do komunikacji z API OpenRouter, który będzie obsługiwał zarówno generowanie treści, jak i tworzenie embeddingów (wektorów).
+3.  **Skrypt do Generowania Embeddingów:**
+    - Stworzenie jednorazowego skryptu, który pobierze wszystkie istniejące artykuły, wygeneruje dla nich embeddingi za pomocą OpenRouter, a następnie zapisze je w nowej kolumnie wektorowej.
+4.  **Integracja Wyszukiwania Semantycznego z API:**
+    - Zmodyfikowanie endpointów API (np. do generowania podtematów). Nowa logika powinna wyglądać następująco:
+      a. Pobierz zapytanie użytkownika (np. główny temat).
+      b. Wygeneruj embedding dla tego zapytania.
+      c. Użyj `pgvector` do znalezienia w bazie `N` najbardziej podobnych semantycznie artykułów (kontekstu).
+      d. Zbuduj prompt dla AI, który zawiera pierwotne zapytanie oraz znaleziony kontekst.
+      e. Wyślij kompletny prompt do OpenRouter w celu wygenerowania odpowiedzi.
+5.  **Testowanie i Walidacja:**
+    - Ręczne przetestowanie całego przepływu w celu weryfikacji jakości i trafności odpowiedzi AI w oparciu o kontekst z `pgvector`.
 
 ---
 
@@ -127,5 +137,5 @@ Niniejszy dokument przedstawia zrewidowaną, wysokopoziomową strategię wdroże
 3.  **Wdrożenie na Produkcję:**
     - Po akceptacji, wdrożenie aplikacji na środowisko produkcyjne.
 4.  **Zadania po Wdrożeniu:**
-    - Uruchomienie skryptów inicjalizujących.
+    - Uruchomienie skryptów inicjalizujących (np. jednorazowy import istniejących artykułów do tabel `clusters` i `articles`).
     - Monitoring i zbieranie feedbacku.

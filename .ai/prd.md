@@ -29,14 +29,13 @@ Głównym problemem, który rozwiązuje Content Orbit, jest niska efektywność 
 ### 3.2. Baza Danych i Źródła Danych
 
 - System będzie korzystał z bazy danych Supabase do przechowywania wszystkich danych aplikacji (klastry, artykuły, ustawienia etc.).
-- "Baza Wiedzy" o firmie Kryptonum zostanie zainicjowana przez jednorazowy import/skrypt ze strony kryptonum.eu.
-- Bieżące aktualizacje bazy wiedzy będą realizowane automatycznie za pomocą webhooków z Sanity CMS.
+- W ramach uruchomienia MVP, istniejące artykuły ze strony kryptonum.eu zostaną zaimportowane bezpośrednio do tabel `klastry` i `artykuły` w bazie danych, aby stanowiły początkowy kontekst dla AI.
 
 ### 3.3. Rdzeń Aplikacji - Przepływ Tworzenia Treści
 
 - Proces rozpoczyna się na stronie głównej, gdzie użytkownik ma do wyboru dwie opcje: "Nowy temat" lub "Wybierz istniejący".
 - Wybór tematu (ręczny, z listy wygenerowanej przez AI lub z bazy) przenosi użytkownika do widoku generowania podtematów.
-- AI generuje listę propozycji podtematów na podstawie tematu, bazy wiedzy i preferencji. Użytkownik może akceptować, odrzucać lub dodawać własne propozycje.
+- AI generuje listę propozycji podtematów na podstawie tematu, bazy wiedzy, istniejących artykułów i preferencji użytkownika. Użytkownik może akceptować, odrzucać lub dodawać własne propozycje.
 - Po zatwierdzeniu podtematów, aplikacja przechodzi do widoku generowania konceptów. System generuje koncepty w tle, w kolejkach po 3 na raz, aby nie obciążać systemu.
 - Generowanie konceptów odbywa się w tle i jest kontynuowane nawet, jeśli użytkownik przejdzie na inną podstronę w ramach aplikacji. Proces zostanie przerwany tylko w przypadku odświeżenia lub zamknięcia strony. System ostrzeże użytkownika przed wykonaniem takiej akcji.
 - Wygenerowany koncept zawiera: tytuł artykułu, krótki opis, listę nagłówków (jako tablica stringów), tytuł SEO, opis SEO oraz slug.
@@ -123,7 +122,7 @@ Następujące funkcje i elementy nie wchodzą w zakres wersji MVP (Minimum Viabl
 ### ID: US-004
 
 - Tytuł: Masowe generowanie tematów przez AI
-- Opis: Jako użytkownik, chcę mieć możliwość wygenerowania listy propozycji nowych tematów przez AI, która analizuje moje istniejące klastry, aby zaproponować tematy uzupełniające moją strategię contentową.
+- Opis: Jako użytkownik, chcę mieć możliwość wygenerowania listy propozycji nowych tematów przez AI, która analizuje moje istniejące klastry i artykuły, aby zaproponować tematy uzupełniające moją strategię contentową.
 - Kryteria akceptacji:
   - Na stronie głównej znajduje się przycisk "Nowy temat", który otwiera pop-up.
   - W pop-upie jest opcja "Generuj z AI".
