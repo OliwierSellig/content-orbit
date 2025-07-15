@@ -68,10 +68,9 @@ Głównym problemem, który rozwiązuje Content Orbit, jest niska efektywność 
 
 ### 3.7. Zarządzanie Danymi i Usuwanie
 
-- Usunięcie klastra tematycznego spowoduje usunięcie wszystkich powiązanych z nim artykułów z bazy danych aplikacji.
+- Usunięcie klastra tematycznego spowoduje trwałe usunięcie wszystkich powiązanych z nim artykułów z bazy danych aplikacji.
 - Proces usuwania klastra będzie zabezpieczony dodatkową weryfikacją, wymagającą od użytkownika wpisania nazwy klastra w celu potwierdzenia akcji.
 - Usunięte dane nie będą usuwane z Sanity CMS.
-- Zostanie wdrożony mechanizm "soft delete", który pozwoli na przywrócenie usuniętych klastrów i artykułów w ciągu 30 dni.
 
 ### 3.8. Model AI i Budżet
 
@@ -261,17 +260,15 @@ Następujące funkcje i elementy nie wchodzą w zakres wersji MVP (Minimum Viabl
 
 ### ID: US-017
 
-- Tytuł: Usuwanie klastra z mechanizmem "soft delete"
-- Opis: Jako użytkownik, chcę mieć możliwość usunięcia całego klastra tematycznego wraz ze wszystkimi artykułami, ale chcę też mieć pewność, że w razie pomyłki będę mógł go przywrócić w ciągu 30 dni.
+- Tytuł: Trwałe usuwanie klastra
+- Opis: Jako użytkownik, chcę mieć możliwość trwałego usunięcia całego klastra tematycznego wraz ze wszystkimi przypisanymi do niego artykułami.
 - Kryteria akceptacji:
   - Na liście klastrów przy każdym z nich jest opcja "Usuń".
   - Po kliknięciu "Usuń" otwiera się modal z prośbą o potwierdzenie.
   - W modalu znajduje się pole tekstowe, w które należy wpisać nazwę klastra, aby potwierdzić usunięcie.
   - Przycisk potwierdzający usunięcie jest nieaktywny, dopóki nazwa klastra nie zostanie poprawnie wpisana.
-  - Po poprawnym wpisaniu nazwy i kliknięciu przycisku potwierdzającego, klaster i powiązane artykuły znikają z widoku.
-  - Dane nie są fizycznie usuwane z bazy, lecz oznaczane jako usunięte.
-  - Istnieje mechanizm (np. w ustawieniach konta), który pozwala zobaczyć i przywrócić ostatnio usunięte elementy.
-  - Po 30 dniach dane są trwale usuwane.
+  - Po poprawnym wpisaniu nazwy i kliknięciu przycisku potwierdzającego, klaster i wszystkie powiązane z nim artykuły są trwale usuwane z bazy danych.
+  - Operacja nie usuwa artykułów, które zostały już przeniesione do Sanity CMS.
 
 ### ID: US-018
 
