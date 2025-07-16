@@ -70,6 +70,42 @@ export class CustomAuditNotFoundError extends NotFoundError {
 }
 
 /**
+ * 404 Not Found Error - for when a topic cluster is not found.
+ */
+export class TopicClusterNotFoundError extends NotFoundError {
+  constructor(message = "Topic cluster not found") {
+    super(message);
+  }
+}
+
+/**
+ * 400 Bad Request Error - for when a topic cluster name already exists for the user.
+ */
+export class TopicClusterNameConflictError extends BusinessRuleError {
+  constructor(message = "A topic cluster with this name already exists") {
+    super(message);
+  }
+}
+
+/**
+ * 400 Bad Request Error - for when a custom audit title already exists for the user.
+ */
+export class CustomAuditTitleConflictError extends BusinessRuleError {
+  constructor(message = "A custom audit with this title already exists") {
+    super(message);
+  }
+}
+
+/**
+ * 400 Bad Request Error - for when an AI preference title already exists for the user.
+ */
+export class AiPreferenceTitleConflictError extends BusinessRuleError {
+  constructor(message = "An AI preference with this title already exists") {
+    super(message);
+  }
+}
+
+/**
  * 500 Internal Server Error for database-related issues.
  * Includes the original error for better logging.
  */

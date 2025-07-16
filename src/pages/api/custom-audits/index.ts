@@ -7,6 +7,7 @@ import {
   InternalDataValidationError,
   logError,
   UnauthorizedError,
+  CustomAuditTitleConflictError,
 } from "../../../lib/errors";
 import { validateAuth } from "../../../lib/utils";
 import { CreateCustomAuditRequestSchema } from "../../../lib/schemas/custom-audit.schemas";
@@ -98,7 +99,8 @@ export const POST: APIRoute = async ({ locals, request }) => {
     if (
       error instanceof UnauthorizedError ||
       error instanceof DatabaseError ||
-      error instanceof InternalDataValidationError
+      error instanceof InternalDataValidationError ||
+      error instanceof CustomAuditTitleConflictError
     ) {
       logError(error);
       const errResponse = createErrorResponse(error.name, error.message, error.statusCode);

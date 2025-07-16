@@ -7,6 +7,7 @@ import {
   InternalDataValidationError,
   logError,
   UnauthorizedError,
+  AiPreferenceTitleConflictError,
 } from "../../../lib/errors";
 import { validateAuth } from "../../../lib/utils";
 import { UpdateAiPreferenceRequestSchema, UuidParamSchema } from "../../../lib/schemas/ai-preference.schemas";
@@ -68,7 +69,8 @@ export const PATCH: APIRoute = async ({ locals, request, params }) => {
     if (
       error instanceof UnauthorizedError ||
       error instanceof DatabaseError ||
-      error instanceof InternalDataValidationError
+      error instanceof InternalDataValidationError ||
+      error instanceof AiPreferenceTitleConflictError
     ) {
       logError(error);
       const errResponse = createErrorResponse(error.name, error.message, error.statusCode);

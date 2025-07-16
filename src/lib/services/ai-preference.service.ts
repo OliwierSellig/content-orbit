@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { DatabaseError, InternalDataValidationError } from "./../errors";
+import { DatabaseError, InternalDataValidationError, AiPreferenceTitleConflictError } from "./../errors";
 import type { Database } from "../../db/types";
 import type { AiPreferenceDto, CreateAiPreferenceCommand, UpdateAiPreferenceCommand } from "../../types";
 import { AiPreferencesListSchema, AiPreferenceDtoSchema } from "./../schemas/ai-preference.schemas";
@@ -56,24 +56,55 @@ export async function getAiPreferences(
  * @returns A promise resolving to the newly created AI preference.
  * @throws {DatabaseError} If any database-related error occurs.
  * @throws {InternalDataValidationError} If the data from the database is malformed.
+ * @throws {AiPreferenceTitleConflictError} If an AI preference with the same title already exists.
  */
 export async function createAiPreference(
   supabase: SupabaseClient<Database>,
   userId: string,
   data: CreateAiPreferenceCommand
 ): Promise<AiPreferenceDto> {
+  const { title } = data;
+
+  // Trim whitespace and normalize the title
+  const normalizedTitle = title.trim();
+
+  // Check if an AI preference with the same title (case-insensitive) already exists
+  const { data: existingPreference, error: checkError } = await supabase
+    .from("ai_preferences")
+    .select("id")
+    .eq("user_id", userId)
+    .ilike("title", normalizedTitle)
+    .single();
+
+  if (checkError && checkError.code !== "PGRST116") {
+    // PGRST116 is "not found" which is what we want
+    throw new DatabaseError(
+      `Database error while checking AI preference title uniqueness for user: ${userId}`,
+      checkError
+    );
+  }
+
+  if (existingPreference) {
+    throw new AiPreferenceTitleConflictError("An AI preference with this title already exists");
+  }
+
+  // Create the new AI preference
   const { data: insertedData, error } = await supabase
     .from("ai_preferences")
     .insert({
       user_id: userId,
-      title: data.title,
+      title: normalizedTitle,
       prompt: data.prompt,
     })
     .select("id, title, prompt")
     .single();
 
   if (error) {
-    // For all database errors, throw a specific, logged error.
+    // Handle potential race condition where unique constraint is violated at DB level
+    if (error.code === "23505") {
+      // PostgreSQL unique violation
+      throw new AiPreferenceTitleConflictError("An AI preference with this title already exists");
+    }
     throw new DatabaseError(`Database error while creating AI preference for user: ${userId}`, error);
   }
 
@@ -101,6 +132,7 @@ export async function createAiPreference(
  * @returns A promise resolving to the updated AI preference or null if not found.
  * @throws {DatabaseError} If any database-related error occurs.
  * @throws {InternalDataValidationError} If the data from the database is malformed.
+ * @throws {AiPreferenceTitleConflictError} If an AI preference with the same title already exists.
  */
 export async function updateAiPreference(
   supabase: SupabaseClient<Database>,
@@ -108,6 +140,34 @@ export async function updateAiPreference(
   id: string,
   data: UpdateAiPreferenceCommand
 ): Promise<AiPreferenceDto | null> {
+  // If title is being updated, check for uniqueness
+  if (data.title) {
+    const normalizedTitle = data.title.trim();
+
+    // Check if another AI preference with the same title (case-insensitive) already exists
+    const { data: existingPreference, error: checkError } = await supabase
+      .from("ai_preferences")
+      .select("id")
+      .eq("user_id", userId)
+      .neq("id", id) // Exclude the current preference being updated
+      .ilike("title", normalizedTitle)
+      .single();
+
+    if (checkError && checkError.code !== "PGRST116") {
+      throw new DatabaseError(
+        `Database error while checking AI preference title uniqueness for user: ${userId}`,
+        checkError
+      );
+    }
+
+    if (existingPreference) {
+      throw new AiPreferenceTitleConflictError("An AI preference with this title already exists");
+    }
+
+    // Update the data with normalized title
+    data = { ...data, title: normalizedTitle };
+  }
+
   const { data: updatedData, error } = await supabase
     .from("ai_preferences")
     .update(data)
@@ -120,6 +180,11 @@ export async function updateAiPreference(
     // A "not found" error is a legitimate case where no record exists or doesn't belong to user.
     if (error.code === "PGRST116") {
       return null;
+    }
+    // Handle potential race condition where unique constraint is violated at DB level
+    if (error.code === "23505") {
+      // PostgreSQL unique violation
+      throw new AiPreferenceTitleConflictError("An AI preference with this title already exists");
     }
     // For all other database errors, throw a specific, logged error.
     throw new DatabaseError(`Database error while updating AI preference ${id} for user: ${userId}`, error);

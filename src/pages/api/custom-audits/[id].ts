@@ -8,6 +8,7 @@ import {
   InternalDataValidationError,
   logError,
   UnauthorizedError,
+  CustomAuditTitleConflictError,
 } from "../../../lib/errors";
 import { validateAuth } from "../../../lib/utils";
 import { UpdateCustomAuditRequestSchema, UuidParamSchema } from "../../../lib/schemas/custom-audit.schemas";
@@ -71,7 +72,8 @@ export const PATCH: APIRoute = async ({ locals, request, params }) => {
       error instanceof UnauthorizedError ||
       error instanceof CustomAuditNotFoundError ||
       error instanceof DatabaseError ||
-      error instanceof InternalDataValidationError
+      error instanceof InternalDataValidationError ||
+      error instanceof CustomAuditTitleConflictError
     ) {
       logError(error);
       const errResponse = createErrorResponse(error.name, error.message, error.statusCode);
