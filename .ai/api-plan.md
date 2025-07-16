@@ -93,21 +93,6 @@ The knowledge base is managed via a single resource endpoint.
     }
     ```
 
-#### Update knowledge base
-
-- **Method**: `PATCH`
-- **URL**: `/api/knowledge-base`
-- **Description**: Updates the knowledge base for the authenticated user.
-- **Request Body**:
-  ```json
-  {
-    "about_us": "Updated text about the company..."
-  }
-  ```
-- **Success Response**:
-  - **Code**: `200 OK`
-  - **Content**: The updated knowledge base object.
-
 ### 2.3. AI Preferences
 
 Standard CRUD endpoints for managing AI preferences.

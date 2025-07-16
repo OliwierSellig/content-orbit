@@ -86,13 +86,11 @@ Wszystkie błędy są przechwytywane w bloku `try...catch` w handlerze API i log
 ## 9. Etapy wdrożenia
 
 1.  **Utworzenie schematu walidacji**:
-
     - W pliku `src/lib/schemas/profile.schemas.ts` dodać i wyeksportować nowy schemat `UpdateProfileRequestSchema`.
     - Schemat powinien definiować `default_topics_count` i `default_subtopics_count` jako `z.number().int().positive().optional()`.
     - Użyć `.strict()`, aby zapobiec przesyłaniu nadmiarowych pól.
 
 2.  **Rozszerzenie serwisu profilu**:
-
     - W pliku `src/lib/services/profile.service.ts` utworzyć i wyeksportować nową funkcję asynchroniczną `updateProfile`.
     - Funkcja powinna przyjmować `supabase: SupabaseClient`, `userId: string` oraz `data: UpdateProfileCommand`.
     - Wewnątrz funkcji, wykonać zapytanie: `supabase.from("profiles").update(data).eq("id", userId).select().single()`.
