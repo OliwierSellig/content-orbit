@@ -6,8 +6,8 @@ import { z } from "zod";
  */
 export const ProfileResponseSchema = z.object({
   id: z.uuid("Invalid user ID format"),
-  created_at: z.iso.datetime("Invalid creation date format"),
-  updated_at: z.iso.datetime("Invalid update date format"),
+  created_at: z.string().min(1, "Creation date is required"),
+  updated_at: z.string().min(1, "Update date is required"),
   default_topics_count: z
     .number()
     .int("Default topics count must be an integer")

@@ -7,9 +7,41 @@ import type { Tables, TablesInsert, TablesUpdate } from "./db/types";
 // ############################################################################
 
 /**
- * DTO for a user's profile, directly mapping the database row structure.
+ * Represents the structure of a single validation error detail.
  */
-export type ProfileDto = Tables<"profiles">;
+export interface ValidationErrorDetail {
+  path: (string | number)[];
+  message: string;
+}
+
+/**
+ * Represents the structure of a standard API error response.
+ */
+export interface ErrorResponse {
+  error: string;
+  message: string;
+  status: number;
+}
+
+/**
+ * Represents the structure of a validation error response,
+ * including detailed error fields.
+ */
+export interface ValidationErrorResponse extends ErrorResponse {
+  errors: ValidationErrorDetail[];
+}
+
+/**
+ * Data Transfer Object (DTO) for a user's profile.
+ * This is the shape of the data sent to the client.
+ */
+export interface ProfileDto {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  default_topics_count: number;
+  default_subtopics_count: number;
+}
 
 /**
  * Command model for updating a user's profile settings.
