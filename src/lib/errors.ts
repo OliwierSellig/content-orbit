@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import type { ErrorResponse, ValidationErrorResponse, ValidationErrorDetail } from "../types";
-import { fromZodError, type ZodError } from "zod-validation-error";
+import { type ZodError } from "zod";
 
 /**
  * Base class for custom API errors that includes a status code.
@@ -66,6 +66,16 @@ export class DatabaseError extends BaseApiError {
 }
 
 /**
+ * Converts a ZodError into our custom ValidationErrorDetail format
+ */
+function formatZodError(zodError: ZodError): ValidationErrorDetail[] {
+  return zodError.issues.map((issue) => ({
+    path: issue.path.filter((p): p is string | number => typeof p === "string" || typeof p === "number"),
+    message: issue.message,
+  }));
+}
+
+/**
  * 500 Internal Server Error for internal data validation failures.
  * This indicates a mismatch between database schema and application types.
  */
@@ -76,7 +86,7 @@ export class InternalDataValidationError extends BaseApiError {
   constructor(message: string, validationError: ZodError) {
     super(message);
     // Process the error immediately and store the simple details array.
-    this.details = fromZodError(validationError).details;
+    this.details = formatZodError(validationError);
   }
 }
 
@@ -133,11 +143,10 @@ export function createErrorResponse(error: string, message: string, status: numb
  * @returns A formatted validation error response object.
  */
 export function createValidationErrorResponse(message: string, validationError: ZodError): ValidationErrorResponse {
-  const details = fromZodError(validationError);
   return {
     error: "Unprocessable Entity",
     message,
     status: 422,
-    errors: details.details,
+    errors: formatZodError(validationError),
   };
 }

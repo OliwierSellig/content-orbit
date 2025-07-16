@@ -1,9 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { DatabaseError, InternalDataValidationError } from "./../errors";
+import { DatabaseError, InternalDataValidationError, ProfileNotFoundError } from "./../errors";
 import type { Database } from "../../db/types";
-import type { ProfileDto } from "../../types";
+import type { ProfileDto, UpdateProfileCommand } from "../../types";
 import { ProfileResponseSchema } from "./../schemas/profile.schemas";
-import type { ZodError } from "zod-validation-error";
 
 /**
  * Retrieves the profile for the specified user.
@@ -34,7 +33,52 @@ export async function getProfile(supabase: SupabaseClient<Database>, userId: str
     // It is a server-side issue, not a client error.
     throw new InternalDataValidationError(
       "Invalid profile data structure received from database",
-      validationResult.error as unknown as ZodError
+      validationResult.error
+    );
+  }
+
+  return validationResult.data;
+}
+
+/**
+ * Updates the profile settings for the specified user.
+ *
+ * @param supabase - The authenticated Supabase client.
+ * @param userId - The UUID of the user whose profile to update.
+ * @param data - The profile fields to update.
+ * @returns A promise resolving to the updated profile.
+ * @throws {ProfileNotFoundError} If the profile does not exist.
+ * @throws {DatabaseError} If any database-related error occurs.
+ * @throws {InternalDataValidationError} If the returned data from the database is malformed.
+ */
+export async function updateProfile(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  data: UpdateProfileCommand
+): Promise<ProfileDto> {
+  const { data: updatedData, error } = await supabase.from("profiles").update(data).eq("id", userId).select().single();
+
+  if (error) {
+    // Handle "not found" error specifically
+    if (error.code === "PGRST116") {
+      throw new ProfileNotFoundError();
+    }
+    // For all other database errors, throw a specific, logged error.
+    throw new DatabaseError(`Database error while updating profile for user: ${userId}`, error);
+  }
+
+  // Check if data is null (shouldn't happen with .single() but being defensive)
+  if (!updatedData) {
+    throw new ProfileNotFoundError();
+  }
+
+  // Validate the returned data structure
+  const validationResult = ProfileResponseSchema.safeParse(updatedData);
+  if (!validationResult.success) {
+    // This indicates a critical mismatch between the DB schema and our Zod schema.
+    throw new InternalDataValidationError(
+      "Invalid profile data structure received from database after update",
+      validationResult.error
     );
   }
 
