@@ -50,7 +50,7 @@ Niniejszy dokument przedstawia zrewidowaną, wysokopoziomową strategię wdroże
     - Tymczasowe przypisanie ID tego użytkownika na sztywno w logice aplikacji.
 2.  **Implementacja API Routes:**
     - Zdefiniowanie i stworzenie wszystkich potrzebnych API routes w `src/pages/api`.
-    - Stworzenie logiki CRUD, wykorzystującej zamockowane ID użytkownika.
+    - Stworzenie logiki CRUD, wykorzystującej zamockowane ID użytkownika. Każdy endpoint będzie posiadał walidację danych wejściowych opartą o schematy `zod`.
 3.  **Mockowanie Odpowiedzi AI:**
     - Stworzenie funkcji-placeholderów, które będą zwracać statyczne, predefiniowane dane (np. listę tematów) w takim formacie, jakiego oczekujemy od OpenRouter. Prawdziwa integracja AI nastąpi w późniejszej fazie.
 4.  **Testowanie Integracyjne (dla krytycznych ścieżek):**
@@ -70,7 +70,7 @@ Niniejszy dokument przedstawia zrewidowaną, wysokopoziomową strategię wdroże
 2.  **Setup Biblioteki Komponentów:**
     - Instalacja i konfiguracja `shadcn/ui`.
 3.  **Budowa Komponentów i Widoków:**
-    - Stworzenie wszystkich stron (`/dashboard`, `/klastry`, `/edytor`, `/opcje`).
+    - Stworzenie wszystkich stron (`/dashboard`, `/klastry`, `/edytor`, `/opcje`). Widok `/edytor` w ramach MVP będzie uproszczony i nie będzie zawierał interaktywnego czatu z AI.
     - Implementacja komponentów React i Astro, w tym z `shadcn/ui`.
     - Połączenie interfejsu z endpointami API stworzonymi w Fazie 3.
 4.  **Testowanie E2E:**
@@ -111,7 +111,7 @@ Niniejszy dokument przedstawia zrewidowaną, wysokopoziomową strategię wdroże
 
 1.  **Stworzenie Widoku Logowania:**
     - Implementacja interfejsu strony `/login` (bez rejestracji).
-    - Wykorzystanie biblioteki `react-hook-form` do zarządzania stanem formularza.
+    - Wykorzystanie biblioteki `react-hook-form` w połączeniu z `zod` do zarządzania stanem i walidacji formularza.
 2.  **Implementacja Logiki Autentykacji:**
     - Podłączenie formularza logowania do Supabase Auth.
     - Stworzenie middleware w Astro (`src/middleware/index.ts`) do ochrony podstron.

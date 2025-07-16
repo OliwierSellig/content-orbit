@@ -23,6 +23,14 @@ const baseConfig = tseslint.config({
   },
 });
 
+// Allow console statements in server-side code (API routes, middleware, services)
+const serverConfig = tseslint.config({
+  files: ["src/pages/api/**/*.ts", "src/middleware/**/*.ts", "src/lib/services/**/*.ts"],
+  rules: {
+    "no-console": "off", // Allow console statements in server-side code for logging
+  },
+});
+
 const jsxA11yConfig = tseslint.config({
   files: ["**/*.{js,jsx,ts,tsx}"],
   extends: [jsxA11y.flatConfigs.recommended],
@@ -59,6 +67,7 @@ const reactConfig = tseslint.config({
 export default tseslint.config(
   includeIgnoreFile(gitignorePath),
   baseConfig,
+  serverConfig, // Add server config to allow console statements in server-side code
   jsxA11yConfig,
   reactConfig,
   eslintPluginAstro.configs["flat/recommended"],

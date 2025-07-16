@@ -5,6 +5,7 @@ Frontend - Astro z React dla komponentów interaktywnych:
 - TypeScript 5 dla statycznego typowania kodu i lepszego wsparcia IDE
 - Tailwind 4 pozwala na wygodne stylowanie aplikacji
 - Shadcn/ui zapewnia bibliotekę dostępnych komponentów React, na których oprzemy UI
+- Zod posłuży do walidacji schematów danych, zarówno w formularzach frontendowych, jak i na poziomie endpointów API.
 
 Backend - Supabase jako kompleksowe rozwiązanie backendowe:
 

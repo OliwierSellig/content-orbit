@@ -1,5 +1,6 @@
 /// <reference types="astro/client" />
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient, Session, User } from "@supabase/supabase-js";
+import type { Database } from "./db/types";
 
 interface ImportMetaEnv {
   readonly PUBLIC_SUPABASE_URL: string;
@@ -15,6 +16,8 @@ interface ImportMeta {
 
 declare namespace App {
   interface Locals {
-    supabase: SupabaseClient;
+    supabase: SupabaseClient<Database>;
+    session: Session | null;
+    user: User | null;
   }
 }

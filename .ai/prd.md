@@ -46,10 +46,13 @@ Głównym problemem, który rozwiązuje Content Orbit, jest niska efektywność 
 
 ### 3.4. Edytor Artykułów
 
-- Interfejs edytora będzie składał się z trzech paneli:
-  - Lewy panel: Czat z AI do interaktywnego generowania i modyfikowania treści.
-  - Środkowy panel: Edytor tekstu w formacie Markdown.
-  - Prawy panel: Metadane artykułu (tytuł, slug, opis etc.) oraz dostępne akcje (np. "Uruchom audyt", "Przenieś do Sanity").
+- Interfejs edytora będzie składał się z trzech paneli, zapewniając logiczny podział przestrzeni roboczej:
+  - **Lewy panel (Panel Akcji)**: Zawiera wszystkie narzędzia i akcje, które można wykonać na artykule, takie jak przycisk "Generuj treść", lista niestandardowych audytów do uruchomienia oraz przycisk "Przenieś do Sanity".
+  - **Środkowy panel (Edytor Treści)**: Centralny obszar przeznaczony do pisania i edytowania treści w formacie Markdown.
+  - **Prawy panel (Panel Metadanych)**: Przeznaczony do zarządzania danymi opisującymi artykuł, w tym jego tytułem, slugiem, opisem oraz metadanymi SEO.
+- Użytkownik będzie miał do dyspozycji dwie główne funkcje AI w edytorze:
+  - **Generowanie treści**: Przycisk w lewym panelu, który zleca AI napisanie całej treści artykułu na podstawie jego konceptu (tytułu, opisu, struktury nagłówków). Wygenerowana treść zostanie wstawiona do edytora, gotowa do dalszej, ręcznej edycji.
+  - **Uruchamianie audytu**: Użytkownik może wybrać jeden ze swoich niestandardowych audytów z listy w lewym panelu. AI przeanalizuje tekst i zwróci swoje uwagi w formie tekstowej, bez bezpośredniego modyfikowania treści.
 - Użytkownik może w dowolnym momencie nadpisać globalne preferencje AI na poziomie edytowanego artykułu.
 
 ### 3.5. Personalizacja i Zarządzanie Ustawieniami
@@ -76,6 +79,10 @@ Głównym problemem, który rozwiązuje Content Orbit, jest niska efektywność 
 - Usługi AI będą dostarczane przez API OpenRouter.
 - W systemie zostanie zaimplementowany mechanizm kontroli budżetu. Po przekroczeniu ustalonego miesięcznego limitu, wszystkie funkcje generatywne AI zostaną zablokowane do czasu odnowienia limitu.
 
+### 3.9. Walidacja i Integralność Danych
+
+- Wszystkie dane wprowadzane przez użytkownika (formularze, API) będą walidowane pod kątem poprawności formatu i typu przy użyciu biblioteki `zod`, aby zapewnić wysoką integralność danych i bezpieczeństwo.
+
 ## 4. Granice produktu
 
 Następujące funkcje i elementy nie wchodzą w zakres wersji MVP (Minimum Viable Product) tego projektu:
@@ -84,6 +91,7 @@ Następujące funkcje i elementy nie wchodzą w zakres wersji MVP (Minimum Viabl
 - Niestandardowe komponenty w edytorze: Edytor będzie obsługiwał wyłącznie standardowy format Markdown. Obsługa niestandardowych, złożonych komponentów z Sanity (np. galerie zdjęć, bloki CTA) nie jest częścią MVP.
 - Dwukierunkowa synchronizacja z Sanity: Synchronizacja jest jednokierunkowa (z aplikacji do Sanity). Zmiany wprowadzone w Sanity nie będą automatycznie odzwierciedlane w aplikacji Content Orbit.
 - System wersjonowania artykułów: Wersja MVP nie będzie zawierać mechanizmu wersjonowania, który pozwalałby na przywracanie poprzednich wersji edytowanego artykułu.
+- Interaktywny czat z AI w edytorze: Wersja MVP nie będzie zawierać interfejsu czatu do konwersacyjnego edytowania treści. Interakcje z AI w edytorze ograniczają się do jednorazowego generowania treści oraz uruchamiania audytów zwracających wyniki w formie tekstowej.
 - Zaawansowana analiza SEO przez AI: Weryfikacja tematów przez AI w MVP nie będzie obejmować głębokiej analizy potencjału SEO. Ta funkcjonalność zostanie rozważona w przyszłych wersjach produktu.
 - Weryfikacja tematów i podtematów przez AI: Wersja MVP nie będzie zawierać weryfikacji przez AI ręcznie wprowadzonych tematów pod kątem literówek czy merytorycznej zgodności. Weryfikacja ograniczy się do sprawdzania, czy identyczny wpis już istnieje w bazie danych.
 
@@ -206,30 +214,30 @@ Następujące funkcje i elementy nie wchodzą w zakres wersji MVP (Minimum Viabl
 
 ### ID: US-012
 
-- Tytuł: Interaktywna edycja i generowanie treści z AI
-- Opis: Jako użytkownik w edytorze artykułu, chcę prowadzić rozmowę z AI w panelu czatu, aby generować nowe fragmenty tekstu, poprawiać istniejące lub zmieniać ich styl, a proponowane zmiany widzieć bezpośrednio w edytorze.
+- Tytuł: Generowanie treści artykułu przez AI
+- Opis: Jako użytkownik w edytorze artykułu, chcę mieć przycisk "Generuj treść", który zleci AI napisanie całego artykułu na podstawie jego tytułu i opisu, abym mógł skupić się na jego dalszej redakcji.
 - Kryteria akceptacji:
-  - W edytorze dostępny jest panel czatu.
-  - Mogę wpisać polecenie (np. "Rozwiń ten akapit o przykłady").
-  - AI przetwarza polecenie i proponuje zmiany w tekście, wizualnie je oznaczając (np. zielone tło dla dodanych, czerwone dla usuniętych).
-  - Mam przyciski, aby zaakceptować lub odrzucić propozycję AI.
+  - W lewym panelu edytora dostępny jest przycisk "Generuj treść".
+  - Po kliknięciu, AI generuje kompletny tekst artykułu i wstawia go do edytora.
+  - Istniejąca treść w edytorze jest nadpisywana.
+  - Otrzymuję powiadomienie o zakończeniu generowania.
 
 ### ID: US-013
 
 - Tytuł: Uruchamianie niestandardowych audytów AI
-- Opis: Jako użytkownik, chcę mieć możliwość uruchomienia jednym kliknięciem zapisanego wcześniej audytu (np. "Audyt SEO"), aby AI przeanalizowało cały artykuł pod określonym kątem i zasugerowało kompleksowe zmiany.
+- Opis: Jako użytkownik, chcę mieć możliwość uruchomienia jednym kliknięciem zapisanego wcześniej audytu (np. "Audyt SEO"), aby AI przeanalizowało cały artykuł pod określonym kątem i zwróciło mi swoje wnioski w formie tekstowej.
 - Kryteria akceptacji:
-  - W prawym panelu edytora znajduje się lista moich niestandardowych audytów.
+  - W lewym panelu edytora znajduje się lista moich niestandardowych audytów.
   - Po kliknięciu na audyt, AI analizuje treść artykułu na podstawie zapisanego promptu.
-  - Wynik audytu pojawia się w formie propozycji zmian w edytorze i/lub jako wiadomość w panelu czatu.
-  - Mogę zaakceptować lub odrzucić zmiany zasugerowane przez audyt.
+  - Wynik audytu pojawia się w formie tekstowej w dedykowanym panelu lub modalu.
+  - Wynik audytu nie modyfikuje automatycznie treści artykułu.
 
 ### ID: US-014
 
 - Tytuł: Przenoszenie gotowego artykułu do Sanity CMS
 - Opis: Jako użytkownik, po zakończeniu pracy nad artykułem, chcę jednym kliknięciem przenieść go do Sanity, aby mógł on zostać opublikowany na stronie.
 - Kryteria akceptacji:
-  - W edytorze znajduje się przycisk "Przenieś do Sanity".
+  - W lewym panelu edytora znajduje się przycisk "Przenieś do Sanity".
   - Po kliknięciu, aplikacja wysyła treść i metadane artykułu do Sanity API.
   - Artykuł jest tworzony w Sanity jako "draft".
   - Status artykułu w aplikacji zmienia się na "przeniesiony", a jego edycja jest blokowana.
