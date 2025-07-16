@@ -61,6 +61,15 @@ export class KnowledgeBaseNotFoundError extends NotFoundError {
 }
 
 /**
+ * 404 Not Found Error - for when a custom audit is not found.
+ */
+export class CustomAuditNotFoundError extends NotFoundError {
+  constructor(message = "Custom audit not found") {
+    super(message);
+  }
+}
+
+/**
  * 500 Internal Server Error for database-related issues.
  * Includes the original error for better logging.
  */
