@@ -1,6 +1,31 @@
 import { z } from "zod";
 
 /**
+ * Schema for validating article creation requests.
+ * Validates the required fields for creating a new article.
+ */
+export const CreateArticleRequestSchema = z.object({
+  topic_cluster_id: z.uuid("topic_cluster_id must be a valid UUID"),
+  name: z.string().min(1, "Article name cannot be empty").max(255, "Article name must be 255 characters or less"),
+});
+
+/**
+ * Schema for validating article ID parameter.
+ * Used for endpoints that require an article ID in the URL path.
+ */
+export const ArticleIdSchema = z.object({
+  id: z.uuid("Article ID must be a valid UUID"),
+});
+
+/**
+ * Schema for validating run audit requests.
+ * Validates the audit ID in the request body.
+ */
+export const RunAuditRequestSchema = z.object({
+  audit_id: z.uuid("audit_id must be a valid UUID"),
+});
+
+/**
  * Schema for validating query parameters when listing articles.
  * Includes validation for required topic_cluster_id and optional filtering/pagination parameters.
  */

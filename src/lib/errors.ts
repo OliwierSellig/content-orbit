@@ -115,6 +115,15 @@ export class AiPreferenceTitleConflictError extends BusinessRuleError {
 }
 
 /**
+ * 400 Bad Request Error - for when a required profile setting is missing.
+ */
+export class MissingProfileConfigurationError extends BusinessRuleError {
+  constructor(message = "User profile is missing a required configuration for this action") {
+    super(message);
+  }
+}
+
+/**
  * 500 Internal Server Error for database-related issues.
  * Includes the original error for better logging.
  */

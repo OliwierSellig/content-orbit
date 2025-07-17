@@ -8,7 +8,7 @@ Główny przepływ pracy w aplikacji opiera się na trzyetapowym procesie:
 
 1.  Temat: Użytkownik wybiera istniejący temat, wpisuje go ręcznie lub wybiera z listy propozycji wygenerowanych przez AI.
 2.  Podtematy: Na podstawie wybranego tematu, AI masowo generuje propozycje podtematów, uwzględniając bazę wiedzy firmy i preferencje użytkownika.
-3.  Koncepty: Dla zaakceptowanych podtematów, system automatycznie i w tle generuje kompletne koncepty (tytuł, opis, struktura nagłówków, meta dane SEO), które stają się szkieletem dla finalnych artykułów.
+3.  Koncepty: Dla zaakceptowanych podtematów, system automatycznie generuje kompletne koncepty (tytuł, opis, struktura nagłówków, meta dane SEO), które stają się szkieletem dla finalnych artykułów.
 
 Gotowe artykuły mogą być następnie edytowane w zaawansowanym edytorze i jednym kliknięciem przenoszone do systemu Sanity CMS.
 
@@ -36,8 +36,7 @@ Głównym problemem, który rozwiązuje Content Orbit, jest niska efektywność 
 - Proces rozpoczyna się na stronie głównej, gdzie użytkownik ma do wyboru dwie opcje: "Nowy temat" lub "Wybierz istniejący".
 - Wybór tematu (ręczny, z listy wygenerowanej przez AI lub z bazy) przenosi użytkownika do widoku generowania podtematów.
 - AI generuje listę propozycji podtematów na podstawie tematu, bazy wiedzy, istniejących artykułów i preferencji użytkownika. Użytkownik może akceptować, odrzucać lub dodawać własne propozycje.
-- Po zatwierdzeniu podtematów, aplikacja przechodzi do widoku generowania konceptów. System generuje koncepty w tle, w kolejkach po 3 na raz, aby nie obciążać systemu.
-- Generowanie konceptów odbywa się w tle i jest kontynuowane nawet, jeśli użytkownik przejdzie na inną podstronę w ramach aplikacji. Proces zostanie przerwany tylko w przypadku odświeżenia lub zamknięcia strony. System ostrzeże użytkownika przed wykonaniem takiej akcji.
+- Po zatwierdzeniu podtematów, system rozpoczyna synchroniczne generowanie konceptów. Użytkownik widzi wskaźnik ładowania i po zakończeniu procesu otrzymuje listę w pełni wygenerowanych konceptów.
 - Wygenerowany koncept zawiera: tytuł artykułu, krótki opis, listę nagłówków (jako tablica stringów), tytuł SEO, opis SEO oraz slug.
 - Model Danych Artykułu: Podtemat i Artykuł to ta sama encja w bazie danych. Każdy artykuł posiada jeden z trzech statusów:
   - `koncept`: Początkowy stan po wygenerowaniu przez AI. Szkielet artykułu jest gotowy.
@@ -182,24 +181,12 @@ Następujące funkcje i elementy nie wchodzą w zakres wersji MVP (Minimum Viabl
 
 ### ID: US-009
 
-- Tytuł: Automatyczne generowanie konceptów w tle
-- Opis: Jako użytkownik, po zatwierdzeniu listy podtematów, chcę, aby system automatycznie, w tle, rozpoczął generowanie dla nich konceptów (tytuł, opis, nagłówki, SEO), abym mógł śledzić postęp bez blokowania interfejsu.
+- Tytuł: Synchroniczne generowanie konceptów
+- Opis: Jako użytkownik, po zatwierdzeniu listy podtematów, chcę, aby system od razu wygenerował dla nich kompletne koncepty, abym mógł niezwłocznie przystąpić do dalszej pracy.
 - Kryteria akceptacji:
-  - Po zatwierdzeniu podtematów, przechodzę do widoku listy konceptów.
-  - Każdy koncept na liście ma status (np. "W kolejce", "Generowanie", "Gotowy").
-  - Generowanie odbywa się w kolejkach po 3 na raz.
-  - Gdy koncept jest gotowy, jego status się zmienia i staje się on klikalny, umożliwiając przejście do edytora.
-  - Mogę opuścić ten widok i przejść na inną podstronę, a proces generowania będzie kontynuowany w tle.
-  - Przy próbie odświeżenia lub zamknięcia strony w trakcie generowania konceptów, pojawi się systemowe okno dialogowe z ostrzeżeniem o możliwości utraty postępów.
-
-### ID: US-010
-
-- Tytuł: Ponowne generowanie konceptu z widoku listy
-- Opis: Jako użytkownik, przeglądając listę wygenerowanych konceptów, chcę mieć możliwość zlecenia ponownego wygenerowania konkretnego konceptu, jeśli pierwotna wersja mi nie odpowiada, bez potrzeby wchodzenia do edytora.
-- Kryteria akceptacji:
-  - Na liście konceptów, obok każdego elementu ze statusem "Gotowy", znajduje się przycisk "Generuj ponownie".
-  - Po kliknięciu, status tego konceptu zmienia się na "Generowanie", a system tworzy nową wersję.
-  - Na liście konceptów, obok każdego elementu znajduje się przycisk "Usuń".
+  - Po zatwierdzeniu podtematów, interfejs użytkownika pokazuje stan ładowania, informując o trwającym procesie.
+  - Aplikacja wykonuje pojedyncze zapytanie do API i czeka na jego zakończenie.
+  - Po pomyślnym zakończeniu operacji, użytkownik jest przenoszony do widoku z listą w pełni wygenerowanych, gotowych do użycia konceptów.
 
 ### 5.3. Edytor Artykułu i Integracja z Sanity
 
@@ -208,7 +195,7 @@ Następujące funkcje i elementy nie wchodzą w zakres wersji MVP (Minimum Viabl
 - Tytuł: Nawigacja do edytora artykułu
 - Opis: Jako użytkownik, chcę móc przejść z listy konceptów do dedykowanego widoku edytora dla wybranego artykułu, aby rozpocząć pracę nad jego treścią.
 - Kryteria akceptacji:
-  - Na liście konceptów, każdy element ze statusem "Gotowy" lub "W toku" jest klikalny.
+  - Na liście konceptów, każdy element jest klikalny.
   - Kliknięcie na dany element przenosi mnie do trzy-panelowego widoku edytora tego konkretnego artykułu.
   - Status artykułu automatycznie zmienia się na "W toku", jeśli był to "Koncept".
 

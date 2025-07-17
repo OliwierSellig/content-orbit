@@ -208,6 +208,22 @@ Endpoints for managing topic clusters, including AI-driven actions.
     }
     ```
 
+#### Get subtopic suggestions from AI
+
+- **Method**: `GET`
+- **URL**: `/api/topic-clusters/subtopic-suggestions`
+- **Query Parameters**:
+  - `topic_name` (string, required): The name of the topic for which to generate subtopics.
+- **Description**: Generates a list of new subtopic suggestions using AI, based on a provided topic name and the user's knowledge base. The number of suggestions is determined by the `default_subtopics_count` setting in the user's profile.
+- **Success Response**:
+  - **Code**: `200 OK`
+  - **Content**:
+    ```json
+    {
+      "suggestions": ["AI-Generated Subtopic 1", "AI-Generated Subtopic 2"]
+    }
+    ```
+
 #### Create topic cluster
 
 - **Method**: `POST`
@@ -275,7 +291,7 @@ Endpoints for managing articles and the core content generation workflow.
 
 - **Method**: `POST`
 - **URL**: `/api/articles`
-- **Description**: Creates a single new article stub from a subtopic name within a topic cluster. After creation, it immediately triggers a background job to generate the concept details (title, description, slug, SEO fields) using AI.
+- **Description**: Creates a single new article stub from a subtopic name within a topic cluster. The API synchronously generates the concept details (title, description, slug, SEO fields) using AI and returns the complete article object.
 - **Request Body**:
   ```json
   {
@@ -284,31 +300,22 @@ Endpoints for managing articles and the core content generation workflow.
   }
   ```
 - **Success Response**:
-  - **Code**: `202 Accepted`
-  - **Content**: The newly created (but not yet fully generated) article stub. The client should expect the AI-populated fields to be null initially.
+  - **Code**: `201 Created`
+  - **Content**: The newly created and fully generated article object.
     ```json
     {
       "id": "uuid",
       "topic_cluster_id": "uuid",
       "name": "The Name of the New Subtopic",
       "status": "concept",
-      "title": null,
-      "slug": null,
-      "description": null,
+      "title": "AI-Generated Title",
+      "slug": "ai-generated-title",
+      "description": "AI-generated description for the article.",
       "content": null,
-      "seo_title": null,
-      "seo_description": null,
-      ...
+      "seo_title": "AI-Generated SEO Title",
+      "seo_description": "AI-generated SEO description."
     }
     ```
-
-#### Regenerate a single article concept
-
-- **Method**: `POST`
-- **URL**: `/api/articles/{id}/regenerate`
-- **Description**: Triggers a background job to regenerate the AI-created fields for a single article (title, description, content structure, etc.).
-- **Request Body**: None
-- **Success Response**: `202 Accepted`.
 
 #### Get article by ID
 
@@ -409,7 +416,7 @@ Endpoints for managing articles and the core content generation workflow.
   - Schemas will enforce data types, required fields, string lengths, and other constraints derived from the database schema (e.g., `NOT NULL` columns).
 - **Business Logic**:
   - **Duplicate Checks**: Endpoints for creating resources with unique names (e.g., `POST /api/topic-clusters`) will perform a case-insensitive database query to prevent duplicates, returning a `409 Conflict` if a match is found.
-  - **Asynchronous Operations**: Features like concept generation (`/api/articles/generate-concepts`) are designed to be asynchronous. The API initiates the task and returns a `202 Accepted` response, allowing the frontend to remain responsive. The client can then poll for status updates on the relevant resources.
+  - **Synchronous AI Operations**: Features like concept generation (`/api/articles`) are designed to be synchronous. The API initiates the task, waits for the AI to respond, and returns a `201 Created` or `200 OK` response with the complete data. This simplifies the client-side logic by eliminating the need for polling. The user will see a loading indicator while the operation is in progress.
   - **AI Integration**: Logic for interacting with the OpenRouter API will be encapsulated in dedicated service modules (`/src/lib/ai`). These services will be responsible for building prompts (including context from the knowledge base and semantic search results) and handling responses.
   - **State Management**: Endpoints that modify the state of a resource (e.g., `move-to-sanity`) will be responsible for updating the `status` field in the `articles` table according to the defined workflow (`concept` -> `in_progress` -> `moved`).
-- **Development Note (AI Mocking)**: As per the implementation strategy (Phase 3), all calls to external AI services (OpenRouter) will be mocked during initial development. The API endpoints (e.g., `/api/topic-clusters/suggestions`, `/api/articles/generate-concepts`) will return static, pre-defined data that mimics the expected structure of a real AI response. True integration will occur in Phase 5.
+- **Development Note (AI Mocking)**: As per the implementation strategy (Phase 3), all calls to external AI services (OpenRouter) will be mocked during initial development. The API endpoints (e.g., `/api/topic-clusters/suggestions`, `/api/articles`) will return static, pre-defined data that mimics the expected structure of a real AI response. True integration will occur in Phase 5.

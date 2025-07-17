@@ -11,17 +11,43 @@ export const ListTopicClustersQuerySchema = z.object({
 });
 
 /**
- * Schema for validating topic cluster ID parameter.
+ * Zod schema for a single Topic Cluster, used for validating database query results.
+ */
+export const TopicClusterResponseSchema = z.object({
+  id: z.uuid(),
+  created_at: z.string(),
+  updated_at: z.string(),
+  name: z.string(),
+});
+
+/**
+ * Zod schema for an array of Topic Clusters.
+ */
+export const TopicClusterListResponseSchema = z.array(TopicClusterResponseSchema);
+
+/**
+ * Zod schema for the Topic Cluster ID path parameter.
  */
 export const TopicClusterIdSchema = z.object({
-  id: z.uuid("Invalid topic cluster ID format"),
+  id: z.uuid("Invalid UUID for topic cluster ID"),
+});
+
+/**
+ * Zod schema for the Topic Cluster suggestions response DTO.
+ */
+export const TopicClusterSuggestionsDtoSchema = z.object({
+  suggestions: z.array(z.string()),
 });
 
 /**
  * Schema for validating topic cluster creation request.
  */
 export const CreateTopicClusterRequestSchema = z.object({
-  name: z.string().min(1, "Name is required").max(255, "Name must be 255 characters or less"),
+  name: z.string().min(1, "Topic cluster name cannot be empty"),
+});
+
+export const GetTopicClusterSuggestionsRequestSchema = z.object({
+  topic_name: z.string().min(1, "Topic name cannot be empty").optional(),
 });
 
 /**

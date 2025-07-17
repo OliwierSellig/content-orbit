@@ -44,7 +44,6 @@ end
 
             GenerowanieKonceptow --> ListaKonceptow["Widok listy konceptów<br/>(statusy: W kolejce, Generowanie, Gotowy)"]
             ListaKonceptow --> AkcjeNaKonceptach{"Akcje na gotowym koncepcie"}
-            AkcjeNaKonceptach -- "Generuj ponownie" --> GenerowanieKonceptow
             AkcjeNaKonceptach -- "Usuń" --> ListaKonceptow
         end
 
