@@ -79,6 +79,15 @@ export class TopicClusterNotFoundError extends NotFoundError {
 }
 
 /**
+ * 404 Not Found Error - for when an article is not found.
+ */
+export class ArticleNotFoundError extends NotFoundError {
+  constructor(message = "Article not found") {
+    super(message);
+  }
+}
+
+/**
  * 400 Bad Request Error - for when a topic cluster name already exists for the user.
  */
 export class TopicClusterNameConflictError extends BusinessRuleError {

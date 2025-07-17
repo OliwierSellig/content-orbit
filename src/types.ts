@@ -142,9 +142,13 @@ export type CreateTopicClusterCommand = Pick<TablesInsert<"topic_clusters">, "na
 export type ArticleDto = Tables<"articles">;
 
 /**
- * DTO for an article item in a list, omitting the bulky `content` field for performance.
+ * DTO for an article item in a list, containing only essential information for listing.
+ * Omits content, SEO fields, and other detailed information for performance.
  */
-export type ArticleListItemDto = Omit<Tables<"articles">, "content">;
+export type ArticleListItemDto = Pick<
+  Tables<"articles">,
+  "id" | "topic_cluster_id" | "created_at" | "updated_at" | "status" | "name" | "slug"
+>;
 
 /**
  * Command model for creating a new article from a subtopic.
@@ -193,4 +197,32 @@ export interface AuditFindingDto {
  */
 export interface RunAuditResponseDto {
   findings: AuditFindingDto[];
+}
+
+// ############################################################################
+// #
+// # PAGINATION AND QUERIES
+// #
+// ############################################################################
+
+/**
+ * Generic pagination metadata for list responses.
+ */
+export interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+/**
+ * Query parameters for listing articles.
+ */
+export interface ListArticlesQuery {
+  topic_cluster_id: string;
+  status?: "concept" | "in_progress" | "moved";
+  sort_by?: "name" | "created_at" | "updated_at" | "status";
+  order?: "asc" | "desc";
+  page?: number;
+  limit?: number;
 }
