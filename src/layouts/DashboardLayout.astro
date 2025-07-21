@@ -1,0 +1,33 @@
+---
+// Props Interface
+export interface Props {
+  title?: string;
+}
+
+const { title = "Content Orbit" } = Astro.props;
+
+// Import global styles
+import "../styles/global.css";
+import { ToasterProvider } from "../components/ToasterProvider";
+---
+
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content="Content Orbit - Zarządzanie treścią w oparciu o AI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <div class="min-h-screen bg-background">
+      <main class="container mx-auto px-4 py-8">
+        <slot />
+      </main>
+    </div>
+
+    <!-- Toaster dla powiadomień -->
+    <ToasterProvider client:load />
+  </body>
+</html>

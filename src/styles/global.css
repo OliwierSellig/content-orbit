@@ -6,6 +6,7 @@
   --color-neutral-500: #75758a;
   --color-neutral-600: #4a4a57;
   --color-neutral-700: #383842;
+  --color-neutral-750: #2c2c30;
   --color-neutral-800: #202025;
   --color-neutral-900: #000103;
 
@@ -19,6 +20,8 @@
   --color-visited-500: #bea3ff;
 
   --font-sans: "KryptoPoppins", "KryptoPoppins Fallback", "sans-serif";
+
+  --easing: cubic-bezier(0.08, 0.82, 0.17, 1);
 
   --gradient-primary-400: linear-gradient(266deg, #2dd282, #90f4e8);
   --gradient-primary-900: linear-gradient(266deg, #0b0f0d, #011310, #001f1b);
@@ -46,7 +49,10 @@
   }
 
   body {
-    background-color: var(--color-neutral-900);
+    background:
+      linear-gradient(#000103, #000103) padding-box,
+      linear-gradient(266deg, #2dd282, #90f4e8),
+      border-box;
     color: var(--color-neutral-200);
     font-family: var(--font-sans);
     font-feature-settings:
@@ -161,5 +167,90 @@
     border: 0;
     clip: rect(1px, 1px, 1px, 1px);
     clip-path: inset(0px 0px 99.9% 99.9%);
+  }
+
+  /* Toast styling */
+  .success-toast {
+    border: 1px solid #2dd282 !important;
+    background:
+      linear-gradient(var(--color-neutral-900), var(--color-neutral-900)) padding-box,
+      linear-gradient(266deg, #2dd282, #90f4e8) border-box !important;
+    color: #2dd282 !important;
+  }
+
+  .success-toast [data-icon] {
+    color: #2dd282 !important;
+  }
+
+  .error-toast {
+    border: 1px solid #d44a84 !important;
+    background:
+      linear-gradient(var(--color-neutral-900), var(--color-neutral-900)) padding-box,
+      linear-gradient(266deg, #d44a84, #da2b53, #bf3a3a) border-box !important;
+    color: #d44a84 !important;
+  }
+
+  .error-toast [data-icon] {
+    color: #d44a84 !important;
+  }
+
+  .info-toast,
+  .warning-toast {
+    border: 1px solid var(--color-neutral-500) !important;
+    background: var(--color-neutral-900) !important;
+    color: var(--color-neutral-200) !important;
+  }
+
+  /* Textarea specific styling (Input is now handled via Tailwind classes) */
+  textarea {
+    background: var(--color-neutral-800) !important;
+    border: 2px solid var(--color-neutral-600) !important;
+    color: var(--color-neutral-200) !important;
+    caret-color: #2dd282 !important;
+    transition:
+      border-color 200ms ease-out,
+      background-color 200ms ease-out,
+      box-shadow 200ms ease-out !important;
+  }
+
+  textarea::placeholder {
+    color: var(--color-neutral-500) !important;
+  }
+
+  textarea:hover {
+    border-color: var(--color-neutral-500) !important;
+    background: var(--color-neutral-750) !important;
+  }
+
+  textarea:focus-visible {
+    outline: none !important;
+    border-color: var(--color-neutral-400) !important;
+    background: var(--color-neutral-750) !important;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2) !important;
+  }
+
+  textarea[aria-invalid="true"] {
+    border-color: #d44a84 !important;
+    background: #2a1a22 !important;
+    box-shadow:
+      0 0 0 3px rgba(212, 74, 132, 0.2),
+      0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  /* Enhanced button animations - removed rotation */
+
+  /* Custom easing utility */
+  .ease-custom {
+    transition-timing-function: var(--easing);
+  }
+
+  /* Shimmer animation keyframes */
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
   }
 }
