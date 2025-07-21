@@ -87,12 +87,6 @@ Główny przepływ pracy użytkownika ("happy path") jest następujący:
 - **Główny układ**: Aplikacja wykorzystuje dwa główne układy Astro:
   - `PublicLayout.astro`: Dla stron publicznych.
   - `DashboardLayout.astro`: Dla stron chronionych, który zawiera stały pasek nawigacyjny i logikę mockowania sesji użytkownika dla MVP.
-- **Nawigacja główna (Desktop)**: `DashboardLayout` zawiera stały, poziomy pasek nawigacyjny na górze strony, podzielony na dwie sekcje:
-  - **Lewa strona**: Logo (link do `/`), link "Dashboard" (`/`), link "Klastry" (`/clusters`), link "Opcje" (`/options`).
-  - **Prawa strona**: Menu użytkownika z opcją "Wyloguj".
-- **Nawigacja główna (Mobile)**:
-  - **Lewa strona**: Logo (link do `/`).
-  - **Prawa strona**: Ikona "hamburger menu", która po kliknięciu otwiera panel z linkami nawigacyjnymi ("Dashboard", "Klastry", "Opcje") oraz opcją "Wyloguj".
 
 ## 5. Kluczowe komponenty
 

@@ -9,6 +9,11 @@ const { title = "Content Orbit" } = Astro.props;
 // Import global styles
 import "../styles/global.css";
 import { ToasterProvider } from "../components/ToasterProvider";
+import { Header } from "../components/layout/Header";
+import { ClientRouter } from "astro:transitions";
+
+// Get current path for navigation
+const currentPath = Astro.url.pathname;
 ---
 
 <!doctype html>
@@ -19,10 +24,17 @@ import { ToasterProvider } from "../components/ToasterProvider";
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <title>{title}</title>
+
+    <!-- Enable View Transitions for smooth page navigation -->
+    <ClientRouter />
   </head>
   <body>
     <div class="min-h-screen bg-background">
-      <main class="container mx-auto px-4 py-8">
+      <!-- Header z nawigacją -->
+      <Header client:load currentPath={currentPath} transition:name="header" transition:persist />
+
+      <!-- Główna treść -->
+      <main class="container mx-auto px-4 py-8" transition:name="main-content">
         <slot />
       </main>
     </div>

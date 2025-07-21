@@ -137,7 +137,7 @@ export const CrudFormModal: React.FC<CrudFormModalProps> = ({
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent opacity-60"></div>
 
         <DialogHeader className="space-y-4 pb-2">
-          <DialogTitle className="text-2xl font-bold text-white bg-gradient-to-r from-white to-neutral-300 bg-clip-text text-transparent">
+          <DialogTitle className="text-2xl font-bold  bg-gradient-to-r from-white to-neutral-300 bg-clip-text text-transparent">
             {getTitle()}
           </DialogTitle>
           <DialogDescription className="text-neutral-400 text-base leading-relaxed">
@@ -175,7 +175,7 @@ export const CrudFormModal: React.FC<CrudFormModalProps> = ({
                   <FormControl>
                     <Textarea
                       placeholder="Wprowadź szczegółowy prompt..."
-                      className="min-h-[160px] resize-none text-base leading-relaxed"
+                      className="min-h-[160px] resize-none text-base leading-relaxed max-h-[200px] overflow-y-auto"
                       disabled={isFormSubmitting}
                       {...field}
                     />

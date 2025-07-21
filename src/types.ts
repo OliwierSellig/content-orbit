@@ -2,6 +2,24 @@ import type { Tables, TablesInsert, TablesUpdate } from "./db/types";
 
 // ############################################################################
 // #
+// # NAVIGATION
+// #
+// ############################################################################
+
+/**
+ * Represents a navigation item in the dashboard layout.
+ */
+export interface NavItem {
+  /** Etykieta tekstowa linku */
+  label: string;
+  /** Ścieżka URL, do której prowadzi link */
+  href: string;
+  /** Opcjonalna ikona do wyświetlenia obok etykiety */
+  icon?: React.ComponentType<{ className?: string }>;
+}
+
+// ############################################################################
+// #
 // # PROFILES
 // #
 // ############################################################################
