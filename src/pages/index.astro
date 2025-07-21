@@ -1,1 +1,30 @@
-<h1>Hello World</h1>
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Witaj w Content Orbit">
+  <main class="max-width py-24">
+    <section class="text-center">
+      <h1 class="h1 mb-4">
+        Witaj w <strong>Content Orbit</strong>
+      </h1>
+      <p class="max-w-3xl mx-auto text-neutral-400">
+        Zoptymalizuj i skaluj proces tworzenia treści SEO. Nasza aplikacja pomoże Ci w generowaniu
+        <strong>wysokiej jakości</strong> artykułów, które poprawią pozycjonowanie Twojej strony.
+      </p>
+      <div class="cta-wrapper mt-8 justify-center">
+        <a href="/clusters" class="link">Zobacz swoje klastry</a>
+        <a href="/options" class="link">Dostosuj opcje</a>
+      </div>
+    </section>
+  </main>
+</Layout>
+
+<style>
+  .max-width {
+    max-width: 80.375rem;
+    width: calc(100% - 2rem * 2);
+    margin: 0 auto;
+    height: 100%;
+  }
+</style>

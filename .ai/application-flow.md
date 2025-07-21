@@ -38,11 +38,9 @@ end
         end
 
         subgraph "3. Generowanie Konceptów (US-009, US-010)"
-            ZatwierdzPodtematy --> GenerowanieKonceptow["Automatyczne generowanie konceptów w tle<br/>(w kolejkach po 3)"]
-            note_koncepty1[/"Proces kontynuowany przy nawigacji,<br/>ostrzeżenie przy zamknięciu strony"/]
-            GenerowanieKonceptow -.-> note_koncepty1
+            ZatwierdzPodtematy --> GenerowanieKonceptow["Synchroniczne generowanie konceptów<br/>(Użytkownik widzi wskaźnik ładowania)"]
 
-            GenerowanieKonceptow --> ListaKonceptow["Widok listy konceptów<br/>(statusy: W kolejce, Generowanie, Gotowy)"]
+            GenerowanieKonceptow --> ListaKonceptow["Widok listy konceptów"]
             ListaKonceptow --> AkcjeNaKonceptach{"Akcje na gotowym koncepcie"}
             AkcjeNaKonceptach -- "Usuń" --> ListaKonceptow
         end

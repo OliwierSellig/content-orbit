@@ -9,6 +9,7 @@ import eslintPluginReactHooks from "eslint-plugin-react-hooks";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import tseslint from "typescript-eslint";
+import eslintPluginTailwindcss from "eslint-plugin-tailwindcss";
 
 // File path setup
 const __filename = fileURLToPath(import.meta.url);
@@ -71,5 +72,18 @@ export default tseslint.config(
   jsxA11yConfig,
   reactConfig,
   eslintPluginAstro.configs["flat/recommended"],
-  eslintPluginPrettier
+  eslintPluginPrettier,
+  eslintPluginTailwindcss.configs["flat/recommended"],
+  {
+    plugins: {
+      "react-compiler": reactCompiler,
+      "react-hooks": eslintPluginReactHooks,
+      tailwindcss: eslintPluginTailwindcss,
+    },
+    rules: {
+      "no-console": "warn",
+      "no-unused-vars": "off",
+      "tailwindcss/no-custom-classname": "off",
+    },
+  }
 );
