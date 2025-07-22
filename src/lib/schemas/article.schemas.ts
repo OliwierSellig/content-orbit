@@ -91,6 +91,13 @@ export const updateArticleRequestSchema = z
   });
 
 /**
+ * Schema for validating the request body for regenerating a concept.
+ */
+export const regenerateArticleConceptRequestSchema = z.object({
+  name: z.string().min(1, "Name cannot be empty"),
+});
+
+/**
  * Type inference for the validated path parameters.
  */
 export type GetArticleParams = z.infer<typeof getArticleParamsSchema>;

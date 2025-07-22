@@ -31,22 +31,43 @@ async function mockGetTopicSuggestions(count: number): Promise<string[]> {
   const mockSuggestions = [
     "Customer Success Stories",
     "Industry Insights",
-    "Product Development",
-    "Market Analysis",
-    "Best Practices",
-    "Technology Trends",
-    "Team Updates",
-    "Company Culture",
-    "Innovation Hub",
-    "Performance Metrics",
-    "Strategic Planning",
-    "Client Feedback",
-    "Process Improvement",
-    "Knowledge Base",
-    "Training Materials",
+    "Product Development Updates",
+    "Market Analysis & Trends",
+    "Best Practices in [Your Industry]",
+    "Technology Trends Explained",
+    "Behind the Scenes: Team Updates",
+    "Exploring Company Culture",
+    "Innovation Hub: What's Next?",
+    "Key Performance Metrics Deep Dive",
+    "Strategic Planning for [Year]",
+    "Analyzing Client Feedback",
+    "Streamlining for Process Improvement",
+    "Building Our Knowledge Base",
+    "New Training Materials & Resources",
+    "The Future of [Your Niche]",
+    "Data Security & Privacy",
+    "Expert Interviews & Q&As",
+    "Corporate Social Responsibility",
+    "Guide to Our Core Features",
+    "Overcoming Common Challenges",
+    "A Look at Our Competitors",
+    "Software Development Lifecycle",
+    "Marketing & SEO Strategies",
+    "Financial Planning & Insights",
+    "Recruitment & Onboarding",
+    "Employee Wellness Programs",
+    "Conference & Event Recaps",
+    "Our Partnership Ecosystem",
+    "Unlocking Customer Loyalty",
+    "Advanced Analytics Techniques",
+    "The Power of Automation",
+    "Cloud Computing in Practice",
+    "UX/UI Design Principles",
+    "Content Marketing ROI",
   ];
-  await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate network delay
-  return Promise.resolve(mockSuggestions.slice(0, count));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  // Shuffle and slice to get a random-like subset
+  return Promise.resolve([...mockSuggestions].sort(() => 0.5 - Math.random()).slice(0, count));
 }
 
 /**
@@ -61,8 +82,43 @@ async function mockGetTopicSuggestions(count: number): Promise<string[]> {
  */
 async function mockGetSubtopicSuggestions(topicName: string, count: number): Promise<string[]> {
   console.log(`[MOCK AI] Generating ${count} subtopics for topic: "${topicName}"`);
-  const mockSubtopics = Array.from({ length: count }, (_, i) => `${topicName} - Subtopic #${i + 1}`);
-  await new Promise((resolve) => setTimeout(resolve, 800)); // Simulate network delay
+  const subtopicTemplates = [
+    "The Ultimate Guide to {topic}",
+    "Understanding the Basics of {topic}",
+    "Advanced Techniques in {topic}",
+    "How {topic} is Changing the Industry",
+    "{topic}: A Beginner's Guide",
+    "Common Mistakes to Avoid in {topic}",
+    "The Future of {topic}",
+    "Case Study: Successful Implementation of {topic}",
+    "Top 10 Tools for {topic}",
+    "How to Measure the ROI of {topic}",
+    "{topic} vs. [Alternative]: A Detailed Comparison",
+    "Key Terminology in {topic} Explained",
+    "Integrating {topic} with Your Existing Workflow",
+    "The Role of AI in {topic}",
+    "Data-Driven Decision Making with {topic}",
+    "Best Practices for Securing {topic}",
+    "How to Create a Strategy for {topic}",
+    "The Impact of {topic} on Customer Experience",
+    "Optimizing Performance in {topic}",
+    "A Deep Dive into the Analytics of {topic}",
+    "Ethical Considerations in {topic}",
+    "How to Build a Team for {topic}",
+    "Troubleshooting Common {topic} Issues",
+    "The History and Evolution of {topic}",
+    "Future-Proofing Your Skills in {topic}",
+    "How {topic} Drives Business Growth",
+    "Creating a Business Case for {topic}",
+    "The Psychology Behind {topic}",
+    "How to Get Started with {topic} in 60 Minutes",
+  ];
+
+  // Shuffle and slice to get a random-like subset of templates
+  const selectedTemplates = [...subtopicTemplates].sort(() => 0.5 - Math.random()).slice(0, count);
+  const mockSubtopics = selectedTemplates.map((template) => template.replace(/{topic}/g, topicName));
+
+  await new Promise((resolve) => setTimeout(resolve, 800));
   return Promise.resolve(mockSubtopics);
 }
 

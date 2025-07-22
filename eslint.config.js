@@ -75,14 +75,7 @@ export default tseslint.config(
   eslintPluginPrettier,
   eslintPluginTailwindcss.configs["flat/recommended"],
   {
-    plugins: {
-      "react-compiler": reactCompiler,
-      "react-hooks": eslintPluginReactHooks,
-      tailwindcss: eslintPluginTailwindcss,
-    },
     rules: {
-      "no-console": "warn",
-      "no-unused-vars": "off",
       "tailwindcss/no-custom-classname": "off",
     },
   }

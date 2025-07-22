@@ -7,6 +7,7 @@ import type {
   CreateArticleCommand,
   RunAuditResponseDto,
   AuditFindingDto,
+  ArticleStubDto,
 } from "../../types";
 import { DatabaseError, ArticleNotFoundError, TopicClusterNotFoundError, CustomAuditNotFoundError } from "../errors";
 import type { UpdateArticleRequest } from "../schemas/article.schemas";
@@ -14,40 +15,38 @@ import type { UpdateArticleRequest } from "../schemas/article.schemas";
 /**
  * MOCKED AI FUNCTION
  *
- * Simulates calling an AI service to generate article metadata.
- * In a real implementation, this would involve a call to an external AI API like OpenRouter.
- *
- * @param {string} name The name/subtopic for which to generate metadata
- * @returns {Promise<object>} A promise that resolves to generated article metadata
+ * Simulates generating a full article concept (metadata) from a name.
+ * @param name The name to base the concept on.
+ * @returns A promise resolving to the generated metadata.
  */
-async function mockGenerateArticleMetadata(name: string): Promise<{
-  title: string;
-  slug: string;
-  description: string;
-  seo_title: string;
-  seo_description: string;
-}> {
+async function mockGenerateArticleMetadata(
+  name: string
+): Promise<
+  Omit<
+    ArticleStubDto,
+    | "id"
+    | "topic_cluster_id"
+    | "created_at"
+    | "updated_at"
+    | "status"
+    | "name"
+    | "content"
+    | "sanity_id"
+    | "moved_to_sanity_at"
+  >
+> {
   console.log(`[MOCK AI] Generating article metadata for: "${name}"`);
-
-  // Simulate processing delay
-  await new Promise((resolve) => setTimeout(resolve, 1200));
-
-  // Generate mock metadata based on the name
-  const title = `AI-Generated: ${name}`;
+  await new Promise((resolve) => setTimeout(resolve, 600)); // Simulate network delay
   const slug = name
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-  const description = `This article explores various aspects of ${name}, providing comprehensive insights and practical information.`;
-  const seo_title = `${name} - Complete Guide`;
-  const seo_description = `Discover everything about ${name}. Expert insights, best practices, and detailed analysis.`;
-
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "");
   return {
-    title,
-    slug,
-    description,
-    seo_title,
-    seo_description,
+    title: `AI Title for: ${name}`,
+    slug: slug,
+    description: `This is an AI-generated description for the article titled '${name}'. It provides a concise summary.`,
+    seo_title: `SEO Title | ${name}`,
+    seo_description: `Optimized SEO description for '${name}' to attract organic traffic.`,
   };
 }
 
@@ -669,4 +668,40 @@ export async function deleteArticle(supabase: SupabaseClient, articleId: string)
     // Handle any unexpected errors
     throw new DatabaseError("An unexpected error occurred while deleting article", error as Error);
   }
+}
+
+/**
+ * Regenerates an article's core metadata fields using an AI service.
+ *
+ * @param supabase The authenticated Supabase client
+ * @param articleId The ID of the article to regenerate
+ * @param name The new name to base the regeneration on
+ * @returns A promise that resolves to the updated article
+ */
+export async function regenerateArticleConcept(
+  supabase: SupabaseClient,
+  articleId: string,
+  name: string
+): Promise<ArticleDto> {
+  console.log(`[ArticleService] regenerateArticleConcept for article: ${articleId} with name: "${name}"`);
+
+  // 1. Generate new AI metadata from the provided name
+  const aiMetadata = await mockGenerateArticleMetadata(name);
+
+  // 2. Update the existing article with the new name and metadata
+  const { data: updatedArticle, error: updateError } = await supabase
+    .from("articles")
+    .update({
+      name: name.trim(),
+      ...aiMetadata,
+    })
+    .eq("id", articleId)
+    .select("*")
+    .single();
+
+  if (updateError) {
+    throw new DatabaseError(`Failed to update regenerated article concept for article: ${articleId}`, updateError);
+  }
+
+  return updatedArticle as ArticleDto;
 }

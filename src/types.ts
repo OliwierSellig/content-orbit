@@ -192,7 +192,10 @@ export type ArticleStubDto = Omit<ArticleDto, "title" | "slug" | "description" |
 /**
  * Command model for updating an article's details.
  */
-export type UpdateArticleCommand = Pick<TablesUpdate<"articles">, "name" | "content" | "status">;
+export type UpdateArticleCommand = Pick<
+  TablesUpdate<"articles">,
+  "name" | "content" | "status" | "title" | "slug" | "description" | "seo_title" | "seo_description"
+>;
 
 /**
  * Command model for running a custom audit on an article.

@@ -188,17 +188,18 @@ export const CrudFormModal: React.FC<CrudFormModalProps> = ({
             <div className="flex justify-end gap-4 pt-8 border-t border-neutral-700/30">
               <Button
                 type="button"
-                variant="outline"
+                variant="secondary"
                 onClick={handleClose}
                 disabled={isFormSubmitting}
-                className="px-8 py-3 h-auto border-2 border-neutral-600/50 bg-neutral-800/50 text-neutral-300 hover:bg-neutral-700/60 hover:border-neutral-500/60 focus-visible:bg-neutral-700/60 focus-visible:border-neutral-500/60 transition-all duration-300 ease-custom rounded-xl font-medium"
+                className="px-8 py-3 h-auto font-medium"
               >
                 Anuluj
               </Button>
               <Button
                 type="submit"
+                variant="primary"
                 disabled={isFormSubmitting || !form.formState.isValid}
-                className="px-8 py-3 h-auto bg-neutral-600 border-2 border-neutral-500/60 text-neutral-100 hover:bg-neutral-500 hover:border-neutral-400/70 hover:text-white focus-visible:bg-neutral-500 focus-visible:border-neutral-400/70 focus-visible:text-white transition-all duration-300 ease-custom rounded-xl font-medium shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-8 py-3 h-auto font-medium shadow-md hover:shadow-lg"
               >
                 <span className="flex items-center gap-2">
                   {isFormSubmitting && (
