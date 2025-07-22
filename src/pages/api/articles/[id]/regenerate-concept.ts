@@ -5,8 +5,7 @@ import {
   regenerateArticleConceptRequestSchema,
 } from "../../../../lib/schemas/article.schemas";
 import { validateAuth } from "../../../../lib/utils";
-import { createErrorResponse } from "../../../../lib/errors";
-import { logError } from "../../../../lib/errors";
+import { createErrorResponse, logError, ArticleNotFoundError, DatabaseError } from "../../../../lib/errors";
 import { regenerateArticleConcept } from "../../../../lib/services/article.service";
 
 /**
@@ -85,7 +84,7 @@ export const GET: APIRoute = async ({ locals, params }) => {
  */
 export const POST: APIRoute = async ({ locals, params, request }) => {
   try {
-    const { supabase } = validateAuth(locals, "POST /api/articles/{id}/regenerate-concept");
+    const { user, supabase } = validateAuth(locals, "POST /api/articles/{id}/regenerate-concept");
 
     const paramsValidation = updateArticleParamsSchema.safeParse(params);
     if (!paramsValidation.success) {
@@ -119,6 +118,7 @@ export const POST: APIRoute = async ({ locals, params, request }) => {
     const regeneratedArticle = await regenerateArticleConcept(
       supabase,
       paramsValidation.data.id,
+      user.id,
       bodyValidation.data.name
     );
 
@@ -127,6 +127,23 @@ export const POST: APIRoute = async ({ locals, params, request }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
+    if (error instanceof ArticleNotFoundError) {
+      logError(error);
+      const errResponse = createErrorResponse(error.name, error.message, 404);
+      return new Response(JSON.stringify(errResponse), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    if (error instanceof DatabaseError) {
+      logError(error);
+      const errResponse = createErrorResponse(error.name, error.message, 500);
+      return new Response(JSON.stringify(errResponse), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     logError(new Error("An unexpected error occurred in POST regenerate-concept"), { originalError: error });
     const errResponse = createErrorResponse("Internal Server Error", "An unexpected error occurred", 500);
     return new Response(JSON.stringify(errResponse), {

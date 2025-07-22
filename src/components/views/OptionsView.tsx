@@ -60,7 +60,7 @@ export const OptionsView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-900 via-neutral-900">
-      <div className="container mx-auto py-12 px-6">
+      <div className="container mx-auto py-12 px-6 max-w-6xl">
         <div className="mb-12 text-center">
           <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-white to-neutral-300 bg-clip-text text-transparent">
             Opcje

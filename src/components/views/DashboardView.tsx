@@ -1,10 +1,24 @@
 import React, { useState, useEffect } from "react";
+import useSessionStorage from "../hooks/useSessionStorage";
 import { Sparkles, FolderSearch } from "lucide-react";
 import { TopicCreationWizard } from "../dashboard/TopicCreationWizard";
 import { ConceptGenerationList } from "../dashboard/ConceptGenerationList";
-import type { TopicClusterDto } from "../../types";
+import type { TopicClusterDto, ArticleStubDto } from "../../types";
 
 type WizardMode = "new" | "existing";
+
+type GenerationResult = {
+  status: "pending" | "loading" | "success" | "error";
+  isUpdating: boolean;
+  article: ArticleStubDto | null;
+  error: string | null;
+};
+
+type GenerationSessionState = {
+  subtopics: string[];
+  topicCluster: TopicClusterDto;
+  generationResults: Record<string, GenerationResult>;
+} | null;
 
 interface ActionButtonProps {
   onClick: () => void;
@@ -59,22 +73,17 @@ export const DashboardView: React.FC = () => {
   });
   const [wizardKey, setWizardKey] = useState(0);
 
-  const [generationData, setGenerationData] = useState<{
-    subtopics: string[];
-    topicCluster: TopicClusterDto;
-  } | null>(null);
+  const [generationData, setGenerationData] = useSessionStorage<GenerationSessionState>("conceptGenerationState", null);
 
-  const [displayedSubtopics, setDisplayedSubtopics] = useState<string[]>([]);
+  // State to prevent hydration mismatch
+  const [hasMounted, setHasMounted] = useState(false);
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   const [clusters, setClusters] = useState<TopicClusterDto[]>([]);
   const [isLoadingClusters, setIsLoadingClusters] = useState(true);
   const [clustersError, setClustersError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (generationData) {
-      setDisplayedSubtopics(generationData.subtopics);
-    }
-  }, [generationData]);
 
   useEffect(() => {
     const fetchClusters = async () => {
@@ -106,8 +115,12 @@ export const DashboardView: React.FC = () => {
   };
 
   const handleWizardComplete = (subtopics: string[], topicCluster: TopicClusterDto) => {
-    setGenerationData({ subtopics, topicCluster });
+    setGenerationData({ subtopics, topicCluster, generationResults: {} });
     closeWizard();
+  };
+
+  const handleResetFlow = () => {
+    setGenerationData(null);
   };
 
   return (
@@ -121,11 +134,11 @@ export const DashboardView: React.FC = () => {
         </p>
       </div>
 
-      {generationData ? (
+      {hasMounted && generationData ? (
         <ConceptGenerationList
-          subtopics={displayedSubtopics}
-          setSubtopics={setDisplayedSubtopics}
-          topicCluster={generationData.topicCluster}
+          sessionState={generationData}
+          setSessionState={setGenerationData}
+          onReset={handleResetFlow}
         />
       ) : (
         <div className="flex flex-col md:flex-row justify-center items-center gap-8">

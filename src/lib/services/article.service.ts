@@ -37,16 +37,17 @@ async function mockGenerateArticleMetadata(
 > {
   console.log(`[MOCK AI] Generating article metadata for: "${name}"`);
   await new Promise((resolve) => setTimeout(resolve, 600)); // Simulate network delay
+  const randomNumber = Math.floor(Math.random() * 1000);
   const slug = name
     .toLowerCase()
     .replace(/\s+/g, "-")
     .replace(/[^a-z0-9-]/g, "");
   return {
-    title: `AI Title for: ${name}`,
-    slug: slug,
-    description: `This is an AI-generated description for the article titled '${name}'. It provides a concise summary.`,
-    seo_title: `SEO Title | ${name}`,
-    seo_description: `Optimized SEO description for '${name}' to attract organic traffic.`,
+    title: `AI Title for: ${name} #${randomNumber}`,
+    slug: `${slug}-${randomNumber}`,
+    description: `This is an AI-generated description for the article titled '${name}'. It provides a concise summary. Regenerated at: ${new Date().toLocaleTimeString()}`,
+    seo_title: `SEO Title #${randomNumber} | ${name}`,
+    seo_description: `Optimized SEO description for '${name}' to attract organic traffic (v${randomNumber}).`,
   };
 }
 
@@ -89,6 +90,7 @@ export async function createArticleConcept(
   const { data: createdArticle, error: createError } = await supabase
     .from("articles")
     .insert({
+      user_id: userId,
       topic_cluster_id: command.topic_cluster_id,
       name: command.name.trim(),
       status: "concept",
@@ -681,19 +683,35 @@ export async function deleteArticle(supabase: SupabaseClient, articleId: string)
 export async function regenerateArticleConcept(
   supabase: SupabaseClient,
   articleId: string,
+  userId: string,
   name: string
 ): Promise<ArticleDto> {
-  console.log(`[ArticleService] regenerateArticleConcept for article: ${articleId} with name: "${name}"`);
+  console.log(
+    `[ArticleService] regenerateArticleConcept for article: ${articleId} with name: "${name}" for user ${userId}`
+  );
 
-  // 1. Generate new AI metadata from the provided name
+  // 1. Verify that the article exists and belongs to the user
+  const { data: existingArticle, error: fetchError } = await supabase
+    .from("articles")
+    .select("id")
+    .eq("id", articleId)
+    .eq("user_id", userId)
+    .single();
+
+  if (fetchError || !existingArticle) {
+    throw new ArticleNotFoundError("Article not found or does not belong to the user.");
+  }
+
+  // 2. Generate new AI metadata from the provided name
   const aiMetadata = await mockGenerateArticleMetadata(name);
 
-  // 2. Update the existing article with the new name and metadata
+  // 3. Update the existing article with the new name and metadata
   const { data: updatedArticle, error: updateError } = await supabase
     .from("articles")
     .update({
       name: name.trim(),
       ...aiMetadata,
+      updated_at: new Date().toISOString(),
     })
     .eq("id", articleId)
     .select("*")

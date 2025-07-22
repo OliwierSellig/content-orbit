@@ -57,7 +57,12 @@ export const SubtopicManagement: React.FC<SubtopicManagementProps> = ({ onComple
   const handleAddSubtopic = (data: { newSubtopic?: string }) => {
     if (data.newSubtopic && data.newSubtopic.trim() !== "") {
       const topicValue = data.newSubtopic.trim();
-      append({ value: topicValue });
+      if (state.subtopics.includes(topicValue)) {
+        toast.warning(`Podtemat "${topicValue}" już istnieje na liście.`);
+        return;
+      }
+      const updatedSubtopics = [...state.subtopics, topicValue];
+      actions.setSubtopics(updatedSubtopics); // Update context, form will sync via useEffect
       resetField("newSubtopic");
       toast.success(`Dodano podtemat: "${topicValue}"`);
     }
@@ -65,15 +70,16 @@ export const SubtopicManagement: React.FC<SubtopicManagementProps> = ({ onComple
 
   const handleRemoveSubtopic = (index: number) => {
     const topicValue = fields[index].value;
-    remove(index); // This updates the form state
-    const updatedSubtopics = form.getValues().subtopics.map((s) => s.value);
-    actions.setSubtopics(updatedSubtopics); // This updates the context state
+    const updatedSubtopics = state.subtopics.filter((_, i) => i !== index);
+    actions.setSubtopics(updatedSubtopics); // Update context, form will sync via useEffect
     toast.info(`Usunięto podtemat: "${topicValue}"`);
   };
 
-  const handleFormSubmit = async (data: z.infer<typeof subtopicManagementSchema>) => {
+  const handleFormSubmit = async (_data: z.infer<typeof subtopicManagementSchema>) => {
     setIsCreatingCluster(true);
-    const finalSubtopics = data.subtopics.map((s) => s.value);
+    // Use the state from the context as the single source of truth,
+    // ignoring the form data which might not be perfectly in sync.
+    const finalSubtopics = state.subtopics;
     const clusterName = state.selectedTopicName;
 
     if (!clusterName) {

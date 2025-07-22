@@ -1,16 +1,11 @@
 import { toast } from "sonner";
 import React, { useState, useEffect, useCallback } from "react";
+import { Undo2 } from "lucide-react";
 import type { TopicClusterDto, ArticleStubDto, CreateArticleCommand, UpdateArticleCommand } from "../../types";
 import { ConceptGenerationListItem } from "./ConceptGenerationListItem";
-import { LoadingSpinner } from "../shared/LoadingSpinner";
 import { ConceptDetails } from "./ConceptDetails";
 import { DeleteConfirmModal } from "../shared/DeleteConfirmModal";
-
-interface ConceptGenerationListProps {
-  subtopics: string[];
-  setSubtopics: React.Dispatch<React.SetStateAction<string[]>>;
-  topicCluster: TopicClusterDto;
-}
+import { Button } from "../ui/button";
 
 type GenerationResult = {
   status: "pending" | "loading" | "success" | "error";
@@ -19,51 +14,74 @@ type GenerationResult = {
   error: string | null;
 };
 
+type GenerationSessionState = {
+  subtopics: string[];
+  topicCluster: TopicClusterDto;
+  generationResults: Record<string, GenerationResult>;
+};
+
+interface ConceptGenerationListProps {
+  sessionState: GenerationSessionState;
+  setSessionState: (
+    value: GenerationSessionState | null | ((prevState: GenerationSessionState | null) => GenerationSessionState | null)
+  ) => void;
+  onReset: () => void;
+}
+
 export const ConceptGenerationList: React.FC<ConceptGenerationListProps> = ({
-  subtopics,
-  setSubtopics,
-  topicCluster,
+  sessionState,
+  setSessionState,
+  onReset,
 }) => {
+  const { subtopics, topicCluster, generationResults } = sessionState;
+
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [generationResults, setGenerationResults] = useState<Record<string, GenerationResult>>({});
   const [selectedSubtopic, setSelectedSubtopic] = useState<string | null>(null);
 
   // Effect to synchronize results state with the subtopics list
   useEffect(() => {
-    setGenerationResults((prevResults) => {
-      const newResults = { ...prevResults };
-      let hasChanged = false;
-      subtopics.forEach((topic) => {
-        if (!newResults[topic]) {
-          newResults[topic] = { status: "pending", isUpdating: false, article: null, error: null };
-          hasChanged = true;
-        }
-      });
-      // Czyszczenie starych wyników, jeśli podtemat został usunięty
-      Object.keys(newResults).forEach((topic) => {
-        if (!subtopics.includes(topic)) {
-          delete newResults[topic];
-          hasChanged = true;
-        }
-      });
-      return hasChanged ? newResults : prevResults;
+    let hasChanged = false;
+    const newResults = { ...generationResults };
+
+    subtopics.forEach((topic) => {
+      if (!newResults[topic]) {
+        newResults[topic] = { status: "pending", isUpdating: false, article: null, error: null };
+        hasChanged = true;
+      }
     });
 
-    // Aktualizacja wybranego podtematu
+    Object.keys(newResults).forEach((topic) => {
+      if (!subtopics.includes(topic)) {
+        delete newResults[topic];
+        hasChanged = true;
+      }
+    });
+
+    if (hasChanged) {
+      setSessionState((prevState) => (prevState ? { ...prevState, generationResults: newResults } : null));
+    }
+
+    // Update selected subtopic
     setSelectedSubtopic((prevSelected) => {
       if (prevSelected && subtopics.includes(prevSelected)) {
         return prevSelected;
       }
       return subtopics[0] ?? null;
     });
-  }, [subtopics]);
+  }, [subtopics, generationResults, setSessionState]);
 
   const generateConcept = useCallback(
     async (subtopicName: string) => {
-      setGenerationResults((prev) => ({
-        ...prev,
-        [subtopicName]: { ...prev[subtopicName], status: "loading", error: null, isUpdating: false },
-      }));
+      setSessionState((prevState) => {
+        if (!prevState) return null;
+        return {
+          ...prevState,
+          generationResults: {
+            ...prevState.generationResults,
+            [subtopicName]: { status: "loading", error: null, isUpdating: false, article: null },
+          },
+        };
+      });
 
       try {
         const command: CreateArticleCommand = {
@@ -77,35 +95,39 @@ export const ConceptGenerationList: React.FC<ConceptGenerationListProps> = ({
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "Nie udało się wygenerować konceptu.");
+          throw new Error("Nie udało się wygenerować konceptu.");
         }
 
         const newArticle: ArticleStubDto = await response.json();
-        setGenerationResults((prev) => ({
-          ...prev,
-          [subtopicName]: {
-            ...prev[subtopicName],
-            status: "success",
-            article: newArticle,
-            error: null,
-            isUpdating: false,
-          },
-        }));
+        setSessionState((prevState) => {
+          if (!prevState) return null;
+          return {
+            ...prevState,
+            generationResults: {
+              ...prevState.generationResults,
+              [subtopicName]: { status: "success", article: newArticle, error: null, isUpdating: false },
+            },
+          };
+        });
       } catch (err) {
-        setGenerationResults((prev) => ({
-          ...prev,
-          [subtopicName]: {
-            ...prev[subtopicName],
-            status: "error",
-            article: null,
-            error: err instanceof Error ? err.message : "Wystąpił nieoczekiwany błąd.",
-            isUpdating: false,
-          },
-        }));
+        setSessionState((prevState) => {
+          if (!prevState) return null;
+          return {
+            ...prevState,
+            generationResults: {
+              ...prevState.generationResults,
+              [subtopicName]: {
+                status: "error",
+                article: null,
+                error: err instanceof Error ? err.message : "Wystąpił nieoczekiwany błąd.",
+                isUpdating: false,
+              },
+            },
+          };
+        });
       }
     },
-    [topicCluster.id]
+    [topicCluster.id, setSessionState]
   );
 
   const handleRegenerateConcept = useCallback(
@@ -114,10 +136,17 @@ export const ConceptGenerationList: React.FC<ConceptGenerationListProps> = ({
       if (!currentResult || !currentResult.article) return;
 
       const articleId = currentResult.article.id;
-      setGenerationResults((prev) => ({
-        ...prev,
-        [subtopicName]: { ...prev[subtopicName], isUpdating: true, error: null },
-      }));
+
+      setSessionState((prevState) => {
+        if (!prevState) return null;
+        return {
+          ...prevState,
+          generationResults: {
+            ...prevState.generationResults,
+            [subtopicName]: { ...prevState.generationResults[subtopicName], isUpdating: true, error: null },
+          },
+        };
+      });
 
       try {
         const response = await fetch(`/api/articles/${articleId}/regenerate-concept`, {
@@ -126,40 +155,50 @@ export const ConceptGenerationList: React.FC<ConceptGenerationListProps> = ({
           body: JSON.stringify({ name: nameForAI }),
         });
 
-        if (!response.ok) {
-          throw new Error("Nie udało się zregenerować konceptu.");
-        }
+        if (!response.ok) throw new Error("Nie udało się zregenerować konceptu.");
+
         const regeneratedArticle: ArticleStubDto = await response.json();
-        setGenerationResults((prev) => ({
-          ...prev,
-          [subtopicName]: {
-            ...prev[subtopicName],
-            isUpdating: false,
-            article: regeneratedArticle,
-          },
-        }));
+        setSessionState((prevState) => {
+          if (!prevState) return null;
+          return {
+            ...prevState,
+            generationResults: {
+              ...prevState.generationResults,
+              [subtopicName]: {
+                ...prevState.generationResults[subtopicName],
+                isUpdating: false,
+                article: regeneratedArticle,
+              },
+            },
+          };
+        });
       } catch (error) {
-        setGenerationResults((prev) => ({
-          ...prev,
-          [subtopicName]: {
-            ...prev[subtopicName],
-            isUpdating: false,
-            error: "Błąd podczas regeneracji",
-          },
-        }));
+        setSessionState((prevState) => {
+          if (!prevState) return null;
+          return {
+            ...prevState,
+            generationResults: {
+              ...prevState.generationResults,
+              [subtopicName]: {
+                ...prevState.generationResults[subtopicName],
+                isUpdating: false,
+                error: "Błąd podczas regeneracji",
+              },
+            },
+          };
+        });
       }
     },
-    [generationResults]
+    [generationResults, setSessionState]
   );
 
-  // Effect to start generation
   useEffect(() => {
     subtopics.forEach((subtopic) => {
       if (!generationResults[subtopic] || generationResults[subtopic].status === "pending") {
         generateConcept(subtopic);
       }
     });
-  }, [subtopics, generateConcept, generationResults]);
+  }, [subtopics, generationResults, generateConcept]);
 
   const handleSelectSubtopic = (subtopicName: string) => {
     setSelectedSubtopic(subtopicName);
@@ -177,41 +216,31 @@ export const ConceptGenerationList: React.FC<ConceptGenerationListProps> = ({
       if (!currentResult || !currentResult.article) return;
 
       const articleId = currentResult.article.id;
-      const originalArticle = currentResult.article;
-      const originalSubtopics = [...subtopics];
-      const originalResults = { ...generationResults };
-      const originalSelectedSubtopic = selectedSubtopic;
-
+      const originalState = { ...sessionState };
       const newName = data.name;
 
-      if (newName && newName !== subtopicName) {
-        // Update subtopics array
-        setSubtopics((prev) => prev.map((s) => (s === subtopicName ? newName : s)));
-        // Update generationResults by changing the key
-        setGenerationResults((prev) => {
-          const { [subtopicName]: value, ...rest } = prev;
-          return {
+      // Optimistic UI update
+      setSessionState((prevState) => {
+        if (!prevState) return null;
+        const newState = { ...prevState };
+        if (newName && newName !== subtopicName) {
+          newState.subtopics = newState.subtopics.map((s) => (s === subtopicName ? newName : s));
+          const { [subtopicName]: value, ...rest } = newState.generationResults;
+          newState.generationResults = {
             ...rest,
-            [newName]: {
-              ...value,
-              article: { ...value.article!, ...data },
-            },
+            [newName]: { ...value, article: { ...value.article!, ...data } },
           };
-        });
-        // Update selected subtopic
-        if (selectedSubtopic === subtopicName) {
-          setSelectedSubtopic(newName);
+          if (selectedSubtopic === subtopicName) {
+            setSelectedSubtopic(newName);
+          }
+        } else {
+          newState.generationResults[subtopicName] = {
+            ...newState.generationResults[subtopicName],
+            article: { ...newState.generationResults[subtopicName].article!, ...data },
+          };
         }
-      } else {
-        // Just update the article data without changing the key
-        setGenerationResults((prev) => ({
-          ...prev,
-          [subtopicName]: {
-            ...prev[subtopicName],
-            article: { ...prev[subtopicName].article!, ...data },
-          },
-        }));
-      }
+        return newState;
+      });
 
       try {
         const response = await fetch(`/api/articles/${articleId}`, {
@@ -220,23 +249,15 @@ export const ConceptGenerationList: React.FC<ConceptGenerationListProps> = ({
           body: JSON.stringify(data),
         });
 
-        if (!response.ok) {
-          throw new Error("Nie udało się zaktualizować konceptu.");
-        }
+        if (!response.ok) throw new Error("Nie udało się zaktualizować konceptu.");
+
         toast.success("Koncept został zaktualizowany.");
-        setGenerationResults((prev) => ({
-          ...prev,
-          [newName || subtopicName]: { ...prev[newName || subtopicName], isUpdating: false },
-        }));
       } catch (error) {
-        // Revert on error
-        setSubtopics(originalSubtopics);
-        setGenerationResults(originalResults);
-        setSelectedSubtopic(originalSelectedSubtopic);
+        setSessionState(originalState);
         toast.error("Błąd zapisu. Przywracanie poprzedniego stanu.");
       }
     },
-    [generationResults, subtopics, setSubtopics, selectedSubtopic]
+    [sessionState, setSessionState, selectedSubtopic]
   );
 
   const handleDeleteConcept = useCallback(async () => {
@@ -245,61 +266,56 @@ export const ConceptGenerationList: React.FC<ConceptGenerationListProps> = ({
     const articleId = generationResults[selectedSubtopic]?.article?.id;
     if (!articleId) return;
 
-    // Remove from state optimistically
-    const originalResults = { ...generationResults };
-    const originalSubtopics = [...subtopics];
+    if (subtopics.length === 1) {
+      setIsDeleteModalOpen(false);
+      try {
+        const response = await fetch(`/api/articles/${articleId}`, { method: "DELETE" });
+        if (!response.ok) throw new Error("Nie udało się usunąć ostatniego konceptu.");
+        toast.success("Ostatni koncept usunięty. Powrót do ekranu głównego.");
+        onReset();
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Wystąpił błąd podczas usuwania.");
+      }
+      return;
+    }
 
-    const newSubtopics = subtopics.filter((s) => s !== selectedSubtopic);
-    const newResults = { ...generationResults };
-    delete newResults[selectedSubtopic];
+    const originalState = { ...sessionState };
 
-    setSubtopics(newSubtopics);
-    setGenerationResults(newResults);
-
-    // Select the next available subtopic or null
-    const currentIndex = originalSubtopics.findIndex((s) => s === selectedSubtopic);
-    const nextSubtopic = newSubtopics[currentIndex] || newSubtopics[currentIndex - 1] || null;
-    setSelectedSubtopic(nextSubtopic);
-
+    setSessionState((prevState) => {
+      if (!prevState) return null;
+      const newSubtopics = prevState.subtopics.filter((s) => s !== selectedSubtopic);
+      const newResults = { ...prevState.generationResults };
+      delete newResults[selectedSubtopic];
+      const currentIndex = prevState.subtopics.findIndex((s) => s === selectedSubtopic);
+      const nextSubtopic = newSubtopics[currentIndex] || newSubtopics[currentIndex - 1] || null;
+      setSelectedSubtopic(nextSubtopic);
+      return { ...prevState, subtopics: newSubtopics, generationResults: newResults };
+    });
     setIsDeleteModalOpen(false);
 
     try {
-      const response = await fetch(`/api/articles/${articleId}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) {
-        throw new Error("Nie udało się usunąć konceptu.");
-      }
+      const response = await fetch(`/api/articles/${articleId}`, { method: "DELETE" });
+      if (!response.ok) throw new Error("Nie udało się usunąć konceptu.");
       toast.success("Koncept został pomyślnie usunięty.");
     } catch (error) {
-      // Revert on error
-      setSubtopics(originalSubtopics);
-      setGenerationResults(originalResults);
-      setSelectedSubtopic(selectedSubtopic);
+      setSessionState(originalState);
       toast.error(error instanceof Error ? error.message : "Wystąpił nieoczekiwany błąd podczas usuwania.");
     }
-  }, [selectedSubtopic, generationResults, subtopics, setSubtopics]);
-
-  if (false) {
-    return <LoadingSpinner label="Generowanie konceptów..." />;
-  }
-
-  if (false) {
-    return (
-      <div className="text-center text-destructive p-8 border border-destructive/50 rounded-lg max-w-2xl mx-auto">
-        <h3 className="text-lg font-bold mb-2">Błąd generowania konceptów</h3>
-        <p>{generationResults[subtopics[0]]?.error}</p>
-      </div>
-    );
-  }
+  }, [sessionState, setSessionState, onReset, selectedSubtopic]);
 
   const selectedResult = selectedSubtopic ? generationResults[selectedSubtopic] : null;
 
   return (
     <div className="container mx-auto max-w-7xl">
-      <h2 className="text-2xl font-bold text-center mb-10">
-        Generowanie konceptów dla: <span className="text-primary">{topicCluster.name}</span>
-      </h2>
+      <div className="flex justify-between items-center mb-10">
+        <h2 className="text-2xl font-bold text-left">
+          Generowanie konceptów dla: <span className="text-primary">{topicCluster.name}</span>
+        </h2>
+        <Button onClick={onReset} variant="outline" className="group">
+          <Undo2 className="w-4 h-4 mr-2 transition-transform duration-500 group-hover:rotate-360" />
+          Zacznij od nowa
+        </Button>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
         <div className="md:col-span-4 lg:col-span-5">
           <div className="space-y-3">

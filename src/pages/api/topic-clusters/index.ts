@@ -56,9 +56,9 @@ export const GET: APIRoute = async ({ locals, url }) => {
     }
 
     // Get topic clusters from service
-    const response = await getTopicClusters(supabase, user.id, validationResult.data);
+    const topicClusters = await getTopicClusters(supabase, user.id);
 
-    return new Response(JSON.stringify(response), {
+    return new Response(JSON.stringify(topicClusters), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
