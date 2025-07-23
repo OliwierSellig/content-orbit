@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ArticleListItemSchema } from "./article.schemas";
 
 /**
  * Schema for validating query parameters when listing topic clusters.
@@ -8,6 +9,11 @@ export const ListTopicClustersQuerySchema = z.object({
   order: z.enum(["asc", "desc"]).default("desc"),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
+  includeArticles: z
+    .string()
+    .optional()
+    .transform((val) => val === "true"),
+  search: z.string().optional(),
 });
 
 /**
@@ -56,3 +62,25 @@ export const GetTopicClusterSuggestionsRequestSchema = z.object({
 export type ListTopicClustersQuery = z.infer<typeof ListTopicClustersQuerySchema>;
 export type TopicClusterIdParams = z.infer<typeof TopicClusterIdSchema>;
 export type CreateTopicClusterRequest = z.infer<typeof CreateTopicClusterRequestSchema>;
+
+/**
+ * Schema for validating topic cluster with nested articles.
+ * Used when includeArticles=true in the API response.
+ */
+export const TopicClusterWithArticlesSchema = z.object({
+  id: z.uuid(),
+  created_at: z.string(),
+  updated_at: z.string(),
+  name: z.string(),
+  articles: z.array(ArticleListItemSchema),
+});
+
+/**
+ * Schema for validating an array of topic clusters with articles.
+ */
+export const TopicClusterWithArticlesListSchema = z.array(TopicClusterWithArticlesSchema);
+
+/**
+ * Type inference for TopicClusterWithArticles schema
+ */
+export type TopicClusterWithArticlesSchemaType = z.infer<typeof TopicClusterWithArticlesSchema>;

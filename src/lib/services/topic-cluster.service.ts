@@ -1,4 +1,9 @@
-import type { TopicClusterDto, CreateTopicClusterCommand, TopicClusterSuggestionsDto } from "../../types";
+import type {
+  TopicClusterDto,
+  TopicClusterWithArticlesDto,
+  CreateTopicClusterCommand,
+  TopicClusterSuggestionsDto,
+} from "../../types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   DatabaseError,
@@ -12,6 +17,7 @@ import {
   TopicClusterListResponseSchema,
   TopicClusterResponseSchema,
   TopicClusterSuggestionsDtoSchema,
+  TopicClusterWithArticlesListSchema,
 } from "../schemas/topic-cluster.schemas";
 import { getProfile } from "./profile.service";
 import { getKnowledgeBase } from "./knowledge-base.service";
@@ -133,27 +139,193 @@ async function mockGetSubtopicSuggestions(topicName: string, count: number): Pro
  *
  * @param supabase - The authenticated Supabase client.
  * @param userId - The UUID of the user.
- * @returns A promise resolving to a list of topic clusters.
+ * @param options - Optional parameters for filtering, pagination and including related data.
+ * @param options.includeArticles - Whether to include articles in the response.
+ * @param options.search - Search term to filter clusters and articles by name.
+ * @param options.page - Page number (1-based). Default: 1
+ * @param options.limit - Number of items per page. Default: 10
+ * @param options.sortBy - Field to sort by. Default: "created_at"
+ * @param options.order - Sort direction. Default: "desc"
+ * @returns A promise resolving to a list of topic clusters or topic clusters with articles.
  * @throws {DatabaseError} If any database-related error occurs.
  * @throws {InternalDataValidationError} If the data from the database is malformed.
+ * @note Pagination is not supported when using search functionality. All matching results are returned when search is provided.
  */
-export async function getTopicClusters(supabase: SupabaseClient, userId: string): Promise<TopicClusterDto[]> {
-  console.log(`[TopicClusterService] getTopicClusters for user: ${userId}`);
-  const { data, error } = await supabase.from("topic_clusters").select("*").eq("user_id", userId).order("name");
+export async function getTopicClusters(
+  supabase: SupabaseClient,
+  userId: string,
+  options?: {
+    includeArticles?: boolean;
+    search?: string;
+    page?: number;
+    limit?: number;
+    sortBy?: "name" | "created_at";
+    order?: "asc" | "desc";
+  }
+): Promise<TopicClusterDto[] | TopicClusterWithArticlesDto[]> {
+  console.log(`[TopicClusterService] getTopicClusters for user: ${userId}`, options);
+
+  const {
+    includeArticles = false,
+    search,
+    page = 1,
+    limit = 10,
+    sortBy = "created_at",
+    order = "desc",
+  } = options || {};
+
+  // Build the select clause based on whether articles should be included
+  const selectClause = includeArticles ? "*, articles(*)" : "*";
+
+  let query = supabase.from("topic_clusters").select(selectClause).eq("user_id", userId);
+
+  // Add search filtering if provided
+  if (search) {
+    // NOTE: Pagination is not supported for any search functionality for consistency
+    console.warn(
+      `[TopicClusterService] Pagination not supported when search is provided. Parameters page=${page}, limit=${limit} will be ignored.`
+    );
+
+    if (includeArticles) {
+      // For nested relations with search, we need two strategies:
+      // 1. Clusters matching by name → return with ALL their articles
+      // 2. Clusters with articles matching search → return with ONLY matching articles
+
+      // Query 1: Clusters that match by name (with all their articles)
+      const clustersWithAllArticlesQuery = supabase
+        .from("topic_clusters")
+        .select(selectClause)
+        .eq("user_id", userId)
+        .ilike("name", `%${search}%`)
+        .order("name");
+
+      // Query 2: Clusters that have articles matching the search (we'll filter articles client-side)
+      const clustersWithMatchingArticlesQuery = supabase
+        .from("topic_clusters")
+        .select("*, articles!inner(*)") // Using !inner to only get clusters that have matching articles
+        .eq("user_id", userId)
+        .ilike("articles.name", `%${search}%`) // Filter articles by name at database level
+        .order("name");
+
+      // Execute both queries
+      const [clustersResult, articlesResult] = await Promise.all([
+        clustersWithAllArticlesQuery,
+        clustersWithMatchingArticlesQuery,
+      ]);
+
+      if (clustersResult.error) {
+        throw new DatabaseError(
+          `Database error while fetching topic clusters by name for user: ${userId}`,
+          clustersResult.error
+        );
+      }
+      if (articlesResult.error) {
+        throw new DatabaseError(
+          `Database error while fetching topic clusters by articles for user: ${userId}`,
+          articlesResult.error
+        );
+      }
+
+      // Process results intelligently:
+      const clustersById = new Map<string, any>();
+
+      // First, add all clusters that match by name (with all their articles)
+      (clustersResult.data || []).forEach((cluster: any) => {
+        clustersById.set(cluster.id, cluster);
+      });
+
+      // Then, add clusters that have matching articles, but filter articles client-side
+      // If already present (cluster name matched), keep the version with all articles
+      (articlesResult.data || []).forEach((cluster: any) => {
+        if (!clustersById.has(cluster.id)) {
+          // Filter articles to only include those matching the search term
+          const filteredCluster = {
+            ...cluster,
+            articles: (cluster.articles || []).filter((article: any) =>
+              article.name.toLowerCase().includes(search.toLowerCase())
+            ),
+          };
+          clustersById.set(cluster.id, filteredCluster);
+        }
+      });
+
+      // Convert map to array and sort
+      const combinedData = Array.from(clustersById.values()).sort((a: any, b: any) => a.name.localeCompare(b.name));
+
+      // Validate the combined data
+      const validation = TopicClusterWithArticlesListSchema.safeParse(combinedData);
+      if (!validation.success) {
+        throw new InternalDataValidationError(
+          "Invalid data structure for topic clusters with articles received from database",
+          validation.error
+        );
+      }
+
+      return validation.data as TopicClusterWithArticlesDto[];
+    } else {
+      // Search only in cluster names (simple case)
+      query = query.ilike("name", `%${search}%`);
+
+      // For search without includeArticles, execute immediately without pagination
+      query = query.order(sortBy, { ascending: order === "asc" });
+      const { data, error } = await query;
+
+      if (error) {
+        throw new DatabaseError(`Database error while fetching topic clusters for user: ${userId}`, error);
+      }
+
+      // Use existing validation for simple cluster list
+      const validation = TopicClusterListResponseSchema.safeParse(data);
+      if (!validation.success) {
+        throw new InternalDataValidationError(
+          "Invalid data structure for topic clusters received from database",
+          validation.error
+        );
+      }
+
+      return validation.data as TopicClusterDto[];
+    }
+  }
+
+  // Add sorting and pagination ONLY when no search is provided
+  query = query.order(sortBy, { ascending: order === "asc" });
+
+  // Calculate range for pagination (Supabase uses 0-based indexing)
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+  query = query.range(from, to);
+
+  // Execute query for non-search cases with pagination
+  const { data, error } = await query;
 
   if (error) {
     throw new DatabaseError(`Database error while fetching topic clusters for user: ${userId}`, error);
   }
 
-  const validation = TopicClusterListResponseSchema.safeParse(data);
-  if (!validation.success) {
-    throw new InternalDataValidationError(
-      "Invalid data structure for topic clusters received from database",
-      validation.error
-    );
-  }
+  if (includeArticles) {
+    // Use the dedicated schema for topic clusters with articles
+    const validation = TopicClusterWithArticlesListSchema.safeParse(data);
 
-  return validation.data;
+    if (!validation.success) {
+      throw new InternalDataValidationError(
+        "Invalid data structure for topic clusters with articles received from database",
+        validation.error
+      );
+    }
+
+    return validation.data as TopicClusterWithArticlesDto[];
+  } else {
+    // Use existing validation for simple cluster list
+    const validation = TopicClusterListResponseSchema.safeParse(data);
+    if (!validation.success) {
+      throw new InternalDataValidationError(
+        "Invalid data structure for topic clusters received from database",
+        validation.error
+      );
+    }
+
+    return validation.data;
+  }
 }
 
 /**
@@ -338,6 +510,50 @@ export async function deleteTopicCluster(
   if (count === 0) {
     throw new TopicClusterNotFoundError(`Topic cluster with ID ${topicClusterId} not found for user ${userId}`);
   }
+}
+
+/**
+ * Retrieves a single topic cluster by its ID.
+ *
+ * @param supabase - The authenticated Supabase client.
+ * @param userId - The UUID of the user who owns the topic cluster.
+ * @param topicClusterId - The UUID of the topic cluster to retrieve.
+ * @returns A promise resolving to the topic cluster or null if not found.
+ * @throws {DatabaseError} If any database-related error occurs.
+ * @throws {InternalDataValidationError} If the data from the database is malformed.
+ */
+export async function getTopicClusterById(
+  supabase: SupabaseClient,
+  userId: string,
+  topicClusterId: string
+): Promise<TopicClusterDto | null> {
+  console.log(`[TopicClusterService] getTopicClusterById for user: ${userId}, topicClusterId: ${topicClusterId}`);
+
+  const { data, error } = await supabase
+    .from("topic_clusters")
+    .select("id, created_at, updated_at, name")
+    .eq("user_id", userId)
+    .eq("id", topicClusterId)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") {
+      // Not found
+      return null;
+    }
+    throw new DatabaseError(`Database error while fetching topic cluster ${topicClusterId}`, error);
+  }
+
+  // Validate the data
+  const validationResult = TopicClusterResponseSchema.safeParse(data);
+  if (!validationResult.success) {
+    throw new InternalDataValidationError(
+      "Invalid topic cluster data structure received from database",
+      validationResult.error
+    );
+  }
+
+  return validationResult.data;
 }
 
 /**

@@ -137,6 +137,14 @@ export type UpdateCustomAuditCommand = Pick<TablesUpdate<"custom_audits">, "titl
 export type TopicClusterDto = Omit<Tables<"topic_clusters">, "user_id">;
 
 /**
+ * DTO for a topic cluster with nested articles.
+ * Used when fetching clusters with their associated articles included.
+ */
+export type TopicClusterWithArticlesDto = TopicClusterDto & {
+  articles: ArticleListItemDto[];
+};
+
+/**
  * DTO for AI-generated topic cluster suggestions.
  */
 export interface TopicClusterSuggestionsDto {

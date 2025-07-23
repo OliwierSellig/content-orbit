@@ -20,15 +20,20 @@ export const prerender = false;
 /**
  * GET /api/topic-clusters
  *
- * Retrieves a paginated and sorted list of topic clusters for the authenticated user.
+ * Retrieves a list of topic clusters for the authenticated user.
+ * Supports pagination, sorting, search, and optional article inclusion.
  *
  * Query Parameters:
  * - sort_by (optional): Field to sort by. Allowed values: 'name', 'created_at'. Default: 'created_at'
  * - order (optional): Sort direction. Allowed values: 'asc', 'desc'. Default: 'desc'
- * - page (optional): Page number to retrieve. Default: 1
- * - limit (optional): Number of items per page. Default: 10
+ * - page (optional): Page number to retrieve. Default: 1 (ignored when search is provided)
+ * - limit (optional): Number of items per page. Default: 10 (ignored when search is provided)
+ * - includeArticles (optional): If 'true', includes articles for each cluster. Default: false
+ * - search (optional): Search term to filter clusters (and articles if includeArticles=true) by name
  *
- * @returns 200 OK - with paginated topic clusters data
+ * Note: When search parameter is provided, pagination is disabled and all matching results are returned.
+ *
+ * @returns 200 OK - with topic clusters data (paginated if no search, all results if search provided)
  * @returns 400 Bad Request - if query parameters are invalid
  * @returns 401 Unauthorized - if user is not authenticated
  * @returns 500 Internal Server Error - for database errors or other unexpected issues
@@ -43,6 +48,8 @@ export const GET: APIRoute = async ({ locals, url }) => {
       order: url.searchParams.get("order") || undefined,
       page: url.searchParams.get("page") || undefined,
       limit: url.searchParams.get("limit") || undefined,
+      includeArticles: url.searchParams.get("includeArticles") || undefined,
+      search: url.searchParams.get("search") || undefined,
     };
 
     const validationResult = ListTopicClustersQuerySchema.safeParse(queryParams);
@@ -55,8 +62,17 @@ export const GET: APIRoute = async ({ locals, url }) => {
       });
     }
 
-    // Get topic clusters from service
-    const topicClusters = await getTopicClusters(supabase, user.id);
+    const { includeArticles, search, page, limit, sort_by, order } = validationResult.data;
+
+    // Get topic clusters from service with new options
+    const topicClusters = await getTopicClusters(supabase, user.id, {
+      includeArticles,
+      search,
+      page,
+      limit,
+      sortBy: sort_by,
+      order,
+    });
 
     return new Response(JSON.stringify(topicClusters), {
       status: 200,

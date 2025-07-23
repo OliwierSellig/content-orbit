@@ -104,3 +104,22 @@ export type GetArticleParams = z.infer<typeof getArticleParamsSchema>;
 export type UpdateArticleParams = z.infer<typeof updateArticleParamsSchema>;
 export type DeleteArticleParams = z.infer<typeof deleteArticleParamsSchema>;
 export type UpdateArticleRequest = z.infer<typeof updateArticleRequestSchema>;
+
+/**
+ * Schema for validating article list item data structure.
+ * Used when articles are returned as part of a list or nested in topic clusters.
+ */
+export const ArticleListItemSchema = z.object({
+  id: z.string().uuid(),
+  topic_cluster_id: z.string().uuid(),
+  created_at: z.string(),
+  updated_at: z.string(),
+  status: z.enum(["concept", "in_progress", "moved"]),
+  name: z.string(),
+  slug: z.string(),
+});
+
+/**
+ * Type inference for ArticleListItem schema
+ */
+export type ArticleListItemSchemaType = z.infer<typeof ArticleListItemSchema>;
