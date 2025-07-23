@@ -90,7 +90,7 @@ export const DashboardView: React.FC = () => {
       setIsLoadingClusters(true);
       setClustersError(null);
       try {
-        const response = await fetch("/api/topic-clusters");
+        const response = await fetch("/api/topic-clusters?fetchAll=true");
         if (!response.ok) {
           throw new Error("Nie udało się pobrać istniejących klastrów.");
         }

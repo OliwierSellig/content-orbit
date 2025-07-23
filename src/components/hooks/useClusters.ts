@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import type { TopicClusterWithArticlesDto, TopicClusterDto, ArticleListItemDto } from "../../types";
 import { toast } from "sonner";
 
@@ -8,8 +8,7 @@ interface UseClustersOptions {
 
 interface UseClustersReturn {
   // Data and loading states
-  allData: TopicClusterWithArticlesDto[];
-  displayClusters: TopicClusterWithArticlesDto[];
+  clusters: TopicClusterWithArticlesDto[];
   isLoading: boolean;
   error: string | null;
 
@@ -17,6 +16,7 @@ interface UseClustersReturn {
   searchTerm: string;
   currentPage: number;
   totalPages: number;
+  totalClusters: number;
 
   // Modal states
   isDeleteClusterModalOpen: boolean;
@@ -37,15 +37,17 @@ interface UseClustersReturn {
 
 /**
  * Hook do zarządzania stanem widoku klastrów z artykułami.
- * Obsługuje pobieranie danych, wyszukiwanie, paginację oraz operacje usuwania.
+ * Obsługuje pobieranie danych z serwera, wyszukiwanie, paginację zsynchronizowaną z URL
+ * oraz operacje usuwania.
  */
 export function useClusters(options: UseClustersOptions = {}): UseClustersReturn {
   const { pageSize = 6 } = options;
 
   // Main data states
-  const [allData, setAllData] = useState<TopicClusterWithArticlesDto[]>([]);
+  const [clusters, setClusters] = useState<TopicClusterWithArticlesDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [totalClusters, setTotalClusters] = useState(0);
 
   // Search and pagination states
   const [searchTerm, setSearchTerm] = useState("");
@@ -59,24 +61,38 @@ export function useClusters(options: UseClustersOptions = {}): UseClustersReturn
     null
   );
 
-  // Fetch clusters from API
-  const fetchClusters = async () => {
+  const fetchClusters = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      const url = searchTerm
-        ? `/api/topic-clusters?includeArticles=true&search=${encodeURIComponent(searchTerm)}`
-        : `/api/topic-clusters?includeArticles=true`;
+      const urlParams = new URLSearchParams();
+      urlParams.set("includeArticles", "true");
+      urlParams.set("limit", String(pageSize));
 
-      const response = await fetch(url);
+      if (searchTerm) {
+        urlParams.set("search", searchTerm);
+      } else {
+        urlParams.set("page", String(currentPage));
+      }
+
+      const response = await fetch(`/api/topic-clusters?${urlParams.toString()}`);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch clusters: ${response.status}`);
       }
 
-      const data: TopicClusterWithArticlesDto[] = await response.json();
-      setAllData(data);
+      const data = await response.json();
+
+      // Assume API returns { data: [], total: number } for paginated responses
+      // and [] for search responses
+      if (typeof data.total === "number") {
+        setClusters(data.data);
+        setTotalClusters(data.total);
+      } else {
+        setClusters(data);
+        setTotalClusters(data.length);
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
       setError(errorMessage);
@@ -86,45 +102,54 @@ export function useClusters(options: UseClustersOptions = {}): UseClustersReturn
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPage, pageSize, searchTerm]);
 
-  // Effect for initial load
+  // Sync state from URL on initial load and on popstate (back/forward navigation)
   useEffect(() => {
-    fetchClusters();
+    const handleUrlChange = () => {
+      const params = new URLSearchParams(window.location.search);
+      const page = parseInt(params.get("page") || "1", 10);
+      const search = params.get("search") || "";
+      setCurrentPage(page);
+      setSearchTerm(search);
+    };
+
+    handleUrlChange(); // Initial load
+    window.addEventListener("popstate", handleUrlChange);
+    return () => window.removeEventListener("popstate", handleUrlChange);
   }, []);
 
-  // Effect for search - refetch when search term changes
+  // Effect to fetch data when state changes
   useEffect(() => {
     fetchClusters();
-    setCurrentPage(1); // Reset to first page on search change
-  }, [searchTerm]);
+  }, [fetchClusters]);
 
-  // Compute filtered and paginated data
-  const { displayClusters, totalPages } = useMemo(() => {
-    let filteredData = allData;
-
-    // When using search, API already returns filtered data
-    // For pagination, we need to slice the data client-side only when no search
-    if (!searchTerm) {
-      const startIndex = (currentPage - 1) * pageSize;
-      const endIndex = startIndex + pageSize;
-      filteredData = allData.slice(startIndex, endIndex);
+  const totalPages = useMemo(() => {
+    if (searchTerm) {
+      // Pagination is disabled for search on the backend
+      return 1;
     }
-
-    const pages = searchTerm ? 1 : Math.ceil(allData.length / pageSize);
-
-    return {
-      displayClusters: filteredData,
-      totalPages: pages,
-    };
-  }, [allData, currentPage, pageSize, searchTerm]);
+    return Math.ceil(totalClusters / pageSize);
+  }, [totalClusters, pageSize, searchTerm]);
 
   // Handlers
   const handleSearchChange = (term: string) => {
+    const params = new URLSearchParams(window.location.search);
+    if (term) {
+      params.set("search", term);
+      params.delete("page"); // Reset page when searching
+    } else {
+      params.delete("search");
+    }
+    history.pushState({}, "", `${window.location.pathname}?${params.toString()}`);
     setSearchTerm(term);
+    setCurrentPage(1); // Reset page state internally
   };
 
   const handlePageChange = (page: number) => {
+    const params = new URLSearchParams(window.location.search);
+    params.set("page", String(page));
+    history.pushState({}, "", `${window.location.pathname}?${params.toString()}`);
     setCurrentPage(page);
   };
 
@@ -150,8 +175,14 @@ export function useClusters(options: UseClustersOptions = {}): UseClustersReturn
         throw new Error(`Failed to delete cluster: ${response.status}`);
       }
 
-      // Update local state - remove cluster from allData
-      setAllData((prev) => prev.filter((cluster) => cluster.id !== clusterToDelete.id));
+      // After successful deletion, check if we need to change page
+      if (clusters.length === 1 && currentPage > 1) {
+        // If it was the last cluster on the page, go to the previous page
+        handlePageChange(currentPage - 1);
+      } else {
+        // Otherwise, just refetch the current page's data
+        await refetch();
+      }
 
       toast.success("Klaster został usunięty", {
         description: `Klaster "${clusterToDelete.name}" został pomyślnie usunięty.`,
@@ -178,18 +209,8 @@ export function useClusters(options: UseClustersOptions = {}): UseClustersReturn
         throw new Error(`Failed to delete article: ${response.status}`);
       }
 
-      // Update local state - remove article from the specific cluster
-      setAllData((prev) =>
-        prev.map((cluster) => {
-          if (cluster.id === articleToDelete.clusterId) {
-            return {
-              ...cluster,
-              articles: cluster.articles.filter((article) => article.id !== articleToDelete.article.id),
-            };
-          }
-          return cluster;
-        })
-      );
+      // Refetch data to reflect the change
+      await refetch();
 
       toast.success("Artykuł został usunięty", {
         description: `Artykuł "${articleToDelete.article.name}" został pomyślnie usunięty.`,
@@ -211,14 +232,13 @@ export function useClusters(options: UseClustersOptions = {}): UseClustersReturn
     setArticleToDelete(null);
   };
 
-  const refetch = async () => {
+  const refetch = useCallback(async () => {
     await fetchClusters();
-  };
+  }, [fetchClusters]);
 
   return {
     // Data and loading states
-    allData,
-    displayClusters,
+    clusters,
     isLoading,
     error,
 
@@ -226,6 +246,7 @@ export function useClusters(options: UseClustersOptions = {}): UseClustersReturn
     searchTerm,
     currentPage,
     totalPages,
+    totalClusters,
 
     // Modal states
     isDeleteClusterModalOpen,

@@ -14,6 +14,10 @@ export const ListTopicClustersQuerySchema = z.object({
     .optional()
     .transform((val) => val === "true"),
   search: z.string().optional(),
+  fetchAll: z
+    .string()
+    .optional()
+    .transform((val) => val === "true"),
 });
 
 /**

@@ -14,7 +14,7 @@ import DeleteClusterModal from "../clusters/DeleteClusterModal";
  */
 export default function ClustersView() {
   const {
-    displayClusters,
+    clusters,
     isLoading,
     error,
     searchTerm,
@@ -65,7 +65,7 @@ export default function ClustersView() {
             <div className="text-red-400 mb-2">Błąd podczas ładowania klastrów</div>
             <div className="text-neutral-400 text-sm">{error}</div>
           </div>
-        ) : displayClusters.length === 0 ? (
+        ) : clusters.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-neutral-400">
               {searchTerm ? "Nie znaleziono klastrów pasujących do wyszukiwania" : "Nie masz jeszcze żadnych klastrów"}
@@ -77,7 +77,7 @@ export default function ClustersView() {
             {/* Clusters Grid */}
             <div className="mb-8">
               <ClustersGrid
-                clusters={displayClusters}
+                clusters={clusters}
                 onDeleteClusterRequest={requestClusterDelete}
                 onDeleteArticleRequest={requestArticleDelete}
               />

@@ -50,6 +50,7 @@ export const GET: APIRoute = async ({ locals, url }) => {
       limit: url.searchParams.get("limit") || undefined,
       includeArticles: url.searchParams.get("includeArticles") || undefined,
       search: url.searchParams.get("search") || undefined,
+      fetchAll: url.searchParams.get("fetchAll") || undefined,
     };
 
     const validationResult = ListTopicClustersQuerySchema.safeParse(queryParams);
@@ -62,19 +63,43 @@ export const GET: APIRoute = async ({ locals, url }) => {
       });
     }
 
-    const { includeArticles, search, page, limit, sort_by, order } = validationResult.data;
+    const { includeArticles, search, page, limit, sort_by, order, fetchAll } = validationResult.data;
 
-    // Get topic clusters from service with new options
-    const topicClusters = await getTopicClusters(supabase, user.id, {
+    if (search) {
+      // Search logic returns a flat array
+      const topicClusters = await getTopicClusters(supabase, user.id, {
+        includeArticles,
+        search,
+        sortBy: sort_by,
+        order,
+      });
+
+      return new Response(JSON.stringify(topicClusters), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Paginated logic returns { clusters, total }
+    const result = await getTopicClusters(supabase, user.id, {
       includeArticles,
-      search,
       page,
       limit,
       sortBy: sort_by,
       order,
+      fetchAll,
     });
 
-    return new Response(JSON.stringify(topicClusters), {
+    // We need to type guard here because getTopicClusters has a complex return type
+    if ("clusters" in result && "total" in result) {
+      return new Response(JSON.stringify({ data: result.clusters, total: result.total }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Fallback for unexpected return type, though it shouldn't be reached in paginated path
+    return new Response(JSON.stringify(result), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });

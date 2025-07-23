@@ -146,6 +146,7 @@ async function mockGetSubtopicSuggestions(topicName: string, count: number): Pro
  * @param options.limit - Number of items per page. Default: 10
  * @param options.sortBy - Field to sort by. Default: "created_at"
  * @param options.order - Sort direction. Default: "desc"
+ * @param options.fetchAll - If true, fetches all clusters without pagination. Default: false.
  * @returns A promise resolving to a list of topic clusters or topic clusters with articles.
  * @throws {DatabaseError} If any database-related error occurs.
  * @throws {InternalDataValidationError} If the data from the database is malformed.
@@ -161,8 +162,13 @@ export async function getTopicClusters(
     limit?: number;
     sortBy?: "name" | "created_at";
     order?: "asc" | "desc";
+    fetchAll?: boolean;
   }
-): Promise<TopicClusterDto[] | TopicClusterWithArticlesDto[]> {
+): Promise<
+  | TopicClusterDto[]
+  | TopicClusterWithArticlesDto[]
+  | { clusters: TopicClusterDto[] | TopicClusterWithArticlesDto[]; total: number }
+> {
   console.log(`[TopicClusterService] getTopicClusters for user: ${userId}`, options);
 
   const {
@@ -177,14 +183,13 @@ export async function getTopicClusters(
   // Build the select clause based on whether articles should be included
   const selectClause = includeArticles ? "*, articles(*)" : "*";
 
-  let query = supabase.from("topic_clusters").select(selectClause).eq("user_id", userId);
-
-  // Add search filtering if provided
+  // --- SEARCH LOGIC ---
   if (search) {
-    // NOTE: Pagination is not supported for any search functionality for consistency
     console.warn(
       `[TopicClusterService] Pagination not supported when search is provided. Parameters page=${page}, limit=${limit} will be ignored.`
     );
+
+    let query = supabase.from("topic_clusters").select(selectClause).eq("user_id", userId);
 
     if (includeArticles) {
       // For nested relations with search, we need two strategies:
@@ -262,60 +267,17 @@ export async function getTopicClusters(
       }
 
       return validation.data as TopicClusterWithArticlesDto[];
-    } else {
-      // Search only in cluster names (simple case)
-      query = query.ilike("name", `%${search}%`);
-
-      // For search without includeArticles, execute immediately without pagination
-      query = query.order(sortBy, { ascending: order === "asc" });
-      const { data, error } = await query;
-
-      if (error) {
-        throw new DatabaseError(`Database error while fetching topic clusters for user: ${userId}`, error);
-      }
-
-      // Use existing validation for simple cluster list
-      const validation = TopicClusterListResponseSchema.safeParse(data);
-      if (!validation.success) {
-        throw new InternalDataValidationError(
-          "Invalid data structure for topic clusters received from database",
-          validation.error
-        );
-      }
-
-      return validation.data as TopicClusterDto[];
     }
-  }
+    // Search only in cluster names (simple case, no articles)
+    query = query.ilike("name", `%${search}%`);
 
-  // Add sorting and pagination ONLY when no search is provided
-  query = query.order(sortBy, { ascending: order === "asc" });
+    query = query.order(sortBy, { ascending: order === "asc" });
+    const { data, error } = await query;
 
-  // Calculate range for pagination (Supabase uses 0-based indexing)
-  const from = (page - 1) * limit;
-  const to = from + limit - 1;
-  query = query.range(from, to);
-
-  // Execute query for non-search cases with pagination
-  const { data, error } = await query;
-
-  if (error) {
-    throw new DatabaseError(`Database error while fetching topic clusters for user: ${userId}`, error);
-  }
-
-  if (includeArticles) {
-    // Use the dedicated schema for topic clusters with articles
-    const validation = TopicClusterWithArticlesListSchema.safeParse(data);
-
-    if (!validation.success) {
-      throw new InternalDataValidationError(
-        "Invalid data structure for topic clusters with articles received from database",
-        validation.error
-      );
+    if (error) {
+      throw new DatabaseError(`Database error while fetching topic clusters for user: ${userId}`, error);
     }
 
-    return validation.data as TopicClusterWithArticlesDto[];
-  } else {
-    // Use existing validation for simple cluster list
     const validation = TopicClusterListResponseSchema.safeParse(data);
     if (!validation.success) {
       throw new InternalDataValidationError(
@@ -324,8 +286,55 @@ export async function getTopicClusters(
       );
     }
 
-    return validation.data;
+    return validation.data as TopicClusterDto[];
   }
+
+  // --- PAGINATION LOGIC (NO SEARCH) ---
+  const shouldPaginate = !options?.fetchAll;
+
+  // Base query for counting total items
+  const countQuery = supabase.from("topic_clusters").select("id", { count: "exact", head: true }).eq("user_id", userId);
+
+  // Data query with pagination and sorting
+  let dataQuery = supabase.from("topic_clusters").select(selectClause).eq("user_id", userId);
+
+  // Add sorting and pagination
+  dataQuery = dataQuery.order(sortBy, { ascending: order === "asc" });
+
+  if (shouldPaginate) {
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    dataQuery = dataQuery.range(from, to);
+  }
+
+  // Execute both queries in parallel
+  const [{ data, error }, { count, error: countError }] = await Promise.all([dataQuery, countQuery]);
+
+  if (error) {
+    throw new DatabaseError(`Database error while fetching topic clusters for user: ${userId}`, error);
+  }
+  if (countError) {
+    throw new DatabaseError(`Database error while counting topic clusters for user: ${userId}`, countError);
+  }
+
+  const validationSchema = includeArticles ? TopicClusterWithArticlesListSchema : TopicClusterListResponseSchema;
+  const validation = validationSchema.safeParse(data);
+
+  if (!validation.success) {
+    const message = includeArticles
+      ? "Invalid data structure for topic clusters with articles received from database"
+      : "Invalid data structure for topic clusters received from database";
+    throw new InternalDataValidationError(message, validation.error);
+  }
+
+  if (shouldPaginate) {
+    return {
+      clusters: validation.data as TopicClusterWithArticlesDto[] | TopicClusterDto[],
+      total: count ?? 0,
+    };
+  }
+
+  return validation.data;
 }
 
 /**
