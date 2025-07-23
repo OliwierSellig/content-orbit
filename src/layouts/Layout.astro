@@ -27,6 +27,6 @@ const { title } = Astro.props;
     <main transition:name="page-content">
       <slot />
     </main>
-    <ToasterProvider client:load />
+    <ToasterProvider client:load transition:persist />
   </body>
 </html>
