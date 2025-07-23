@@ -1,6 +1,22 @@
 import { z } from "zod";
 
 /**
+ * Schema for the chat message object, used within the chat request.
+ */
+const ChatMessageSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  content: z.string(),
+});
+
+/**
+ * Schema for validating the chat request body.
+ */
+export const ArticleChatRequestSchema = z.object({
+  message: z.string().min(1, "Message cannot be empty"),
+  history: z.array(ChatMessageSchema).optional(),
+});
+
+/**
  * Schema for validating article creation requests.
  * Validates the required fields for creating a new article.
  */

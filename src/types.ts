@@ -206,6 +206,39 @@ export type UpdateArticleCommand = Pick<
 >;
 
 /**
+ * Represents a single message in an article chat session.
+ */
+export interface ChatMessage {
+  id: string; // Unique message ID, typically generated on the client
+  role: "user" | "assistant";
+  content: string;
+}
+
+/**
+ * Command model for sending a message to the article chat API.
+ */
+export interface ArticleChatCommand {
+  message: string;
+  history: Omit<ChatMessage, "id">[];
+}
+
+/**
+ * DTO for the view model of the article editor, including UI state.
+ */
+export interface ArticleEditorViewModel extends ArticleDto {
+  /** Whether the data in the form/editor differs from the last saved state. */
+  isDirty: boolean;
+  /** The status of the autosave operation. */
+  autosaveStatus: "idle" | "saving" | "success" | "error";
+  /** The status of the AI content generation operation. */
+  generationStatus: "idle" | "generating" | "success" | "error";
+  /** The conversation history for the article chat. */
+  chatHistory: ChatMessage[];
+  /** Whether the AI is currently replying in the chat. */
+  isAiReplying: boolean;
+}
+
+/**
  * Command model for running a custom audit on an article.
  */
 export interface RunAuditCommand {
