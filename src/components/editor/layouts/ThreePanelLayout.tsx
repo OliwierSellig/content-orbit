@@ -8,6 +8,8 @@ import { ChatPanel } from "@/components/editor/chat/ChatPanel";
 import { ActionPanel } from "@/components/editor/chat/ActionPanel";
 import { cn } from "@/lib/utils";
 import { EditorToolbar } from "../common/EditorToolbar";
+import EditableTitle from "../common/EditableTitle";
+import EditableDescription from "../common/EditableDescription";
 
 interface ThreePanelLayoutProps {
   article: ArticleEditorViewModel;
@@ -89,8 +91,8 @@ export const ThreePanelLayout: React.FC<ThreePanelLayoutProps> = ({
   };
 
   return (
-    <div className="hidden lg:flex w-full h-[calc(100vh-64px)]">
-      <PanelGroup direction="horizontal">
+    <div className=" lg:flex w-full h-full">
+      <PanelGroup direction="horizontal" style={{ overflow: "visible" }}>
         <Panel
           ref={leftPanelRef}
           collapsible={!isDragging}
@@ -101,11 +103,13 @@ export const ThreePanelLayout: React.FC<ThreePanelLayoutProps> = ({
           onCollapse={() => {
             if (isLeftPanelOpen) onToggleLeftPanel();
           }}
-          className={cn({ "transition-all duration-200 ease-in-out": !isDragging && !isSettling })}
+          className={cn({
+            "transition-all duration-200 ease-in-out h-[100vh] sticky top-0": !isDragging && !isSettling,
+          })}
         >
           <div
             className={cn(
-              "w-full bg-neutral-800/20 border-r border-b rounded-br-md border-neutral-700/50 p-6 flex flex-col h-full overflow-y-auto custom-scrollbar",
+              "w-full bg-neutral-800/20 border-r border-b rounded-br-md border-neutral-700/50 p-6 flex flex-col h-[100vh] sticky top-0 overflow-y-auto custom-scrollbar",
               {
                 "opacity-0": !isLeftPanelOpen,
                 "opacity-100 transition-opacity duration-200 ease-in-out": isLeftPanelOpen,
@@ -129,8 +133,8 @@ export const ThreePanelLayout: React.FC<ThreePanelLayoutProps> = ({
           <div className="panel-resize-handle-bar" />
         </PanelResizeHandle>
         <Panel minSize={30}>
-          <div className="flex-1 p-6 pt-6 flex flex-col h-full overflow-y-auto custom-scrollbar">
-            <div className="mb-4 sticky top-0 bg-neutral-900 z-10 py-2 -my-2">
+          <div className="flex-1 px-10 py-6 flex flex-col h-full overflow-y-auto custom-scrollbar">
+            <div className="mb-4 sticky top-0 py-2 -my-2">
               <EditorToolbar
                 isLeftPanelOpen={isLeftPanelOpen}
                 isRightPanelOpen={isRightPanelOpen}
@@ -139,9 +143,17 @@ export const ThreePanelLayout: React.FC<ThreePanelLayoutProps> = ({
               />
             </div>
 
-            <div className="w-3/4 mb-12 text-left">
-              <h1 className="text-4xl font-bold text-white mb-3">{article.title || "Wpisz tytuł..."}</h1>
-              <p className="text-lg text-neutral-400">{article.description || "Wpisz opis..."}</p>
+            <div className="w-3/4 mb-8 text-left">
+              <EditableTitle
+                value={article.title || ""}
+                onChange={(value) => onUpdateField("title", value)}
+                disabled={article.isAiReplying}
+              />
+              <EditableDescription
+                value={article.description || ""}
+                onChange={(value) => onUpdateField("description", value)}
+                disabled={article.isAiReplying}
+              />
             </div>
             <MarkdownEditor
               content={article.content || ""}
@@ -164,11 +176,13 @@ export const ThreePanelLayout: React.FC<ThreePanelLayoutProps> = ({
           onCollapse={() => {
             if (isRightPanelOpen) onToggleRightPanel();
           }}
-          className={cn({ "transition-all duration-200 ease-in-out": !isDragging && !isSettling })}
+          className={cn({
+            "transition-all duration-200 ease-in-out h-[100vh] sticky top-0": !isDragging && !isSettling,
+          })}
         >
           <div
             className={cn(
-              "w-full bg-neutral-800/20 border-l border-b rounded-bl-md border-neutral-700/50 p-6 flex flex-col h-full overflow-y-auto custom-scrollbar",
+              "w-full bg-neutral-800/20 border-l border-b rounded-bl-md border-neutral-700/50 p-6 flex flex-col h-[100vh] sticky top-0 overflow-y-auto custom-scrollbar",
               {
                 "opacity-0": !isRightPanelOpen,
                 "opacity-100 transition-opacity duration-200 ease-in-out": isRightPanelOpen,

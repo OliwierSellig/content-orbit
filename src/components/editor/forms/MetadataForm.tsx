@@ -1,7 +1,8 @@
-import React from "react";
-import type { ArticleEditorViewModel, UpdateArticleCommand } from "../../../types";
+import React, { useState } from "react";
+import type { ArticleEditorViewModel, UpdateArticleCommand } from "@/types";
 import { LoadingSpinner } from "../../shared/LoadingSpinner";
 import { SanityLogo } from "../../shared/SanityLogo";
+import { stripHtmlTags } from "@/lib/utils";
 
 interface MetadataFormProps {
   article: ArticleEditorViewModel;
@@ -40,7 +41,7 @@ export const MetadataForm: React.FC<MetadataFormProps> = ({
           <label className="block text-sm font-medium text-neutral-300 mb-2">Tytuł</label>
           <input
             type="text"
-            value={article.title || ""}
+            value={stripHtmlTags(article.title) || ""}
             onChange={(e) => onFieldChange("title", e.target.value)}
             disabled={disabled}
             className="w-full px-3 py-2 bg-neutral-700 border border-neutral-600 rounded-md text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
@@ -63,7 +64,7 @@ export const MetadataForm: React.FC<MetadataFormProps> = ({
         <div>
           <label className="block text-sm font-medium text-neutral-300 mb-2">Opis</label>
           <textarea
-            value={article.description || ""}
+            value={stripHtmlTags(article.description) || ""}
             onChange={(e) => onFieldChange("description", e.target.value)}
             disabled={disabled}
             rows={5}

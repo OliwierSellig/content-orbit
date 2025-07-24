@@ -298,6 +298,88 @@
   .mobile-menu-panel {
     animation: slideInFromRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
+
+  .prose {
+    h1 {
+      @apply text-4xl font-normal mt-12 mb-6;
+    }
+    h2 {
+      @apply text-3xl font-normal mt-10 mb-5;
+    }
+    h3 {
+      @apply text-2xl font-normal mt-8 mb-4;
+    }
+    h4,
+    h5,
+    h6 {
+      @apply text-base font-normal;
+    }
+
+    h1 strong,
+    h2 strong,
+    h3 strong,
+    h4 strong,
+    h5 strong,
+    h6 strong {
+      @apply font-bold;
+    }
+
+    p,
+    li {
+      @apply text-neutral-300;
+    }
+
+    ul {
+      @apply text-neutral-300 list-disc list-outside pl-6;
+    }
+    ol {
+      @apply text-neutral-300 list-decimal list-outside pl-6;
+    }
+
+    ul li::marker,
+    ol li::marker {
+      @apply text-neutral-400;
+    }
+
+    a {
+      @apply text-blue-400 hover:text-blue-500 transition-colors;
+    }
+
+    strong {
+      @apply text-white font-bold;
+    }
+
+    strong::before,
+    strong::after {
+      content: none;
+    }
+
+    code {
+      @apply bg-neutral-700 text-white rounded-md px-1.5 py-1;
+    }
+
+    blockquote {
+      @apply border-l-4 border-neutral-600 pl-4 text-neutral-400 italic;
+    }
+
+    hr {
+      @apply border-neutral-700;
+    }
+  }
+
+  .ProseMirror strong {
+    @apply font-bold text-white;
+  }
+
+  .ProseMirror strong::before,
+  .ProseMirror strong::after {
+    content: none;
+  }
+
+  .text-4xl strong {
+    background-image: var(--gradient-primary-400);
+    @apply bg-clip-text text-transparent;
+  }
 }
 
 @layer components {

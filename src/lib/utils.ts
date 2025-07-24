@@ -8,6 +8,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function stripHtmlTags(html: string | null | undefined): string {
+  if (!html) return "";
+  return html.replace(/<\/?(strong|em)>/g, "");
+}
+
 /**
  * Authentication and authorization result for API endpoints.
  */

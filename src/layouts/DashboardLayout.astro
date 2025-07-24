@@ -2,11 +2,10 @@
 // Props Interface
 export interface Props {
   title?: string;
-  mainClass?: string;
-  headerPosition?: "sticky" | "absolute";
 }
 
-const { title = "Content Orbit", mainClass = "container mx-auto px-4 py-8", headerPosition = "sticky" } = Astro.props;
+const { title = "Content Orbit" } = Astro.props;
+const mainClass = "container mx-auto px-4 py-8";
 
 // Import global styles
 import "../styles/global.css";
@@ -17,6 +16,7 @@ import { cn } from "@/lib/utils";
 
 // Get current path for navigation
 const currentPath = Astro.url.pathname;
+const isArticlePage = currentPath.startsWith("/articles/");
 ---
 
 <!doctype html>
@@ -37,9 +37,9 @@ const currentPath = Astro.url.pathname;
       <header
         class={cn(
           "bg-background border-b border-neutral-600 z-50 backdrop-blur-sm",
-          headerPosition === "sticky" ? "sticky top-0" : "absolute top-0 w-full"
+          isArticlePage ? "absolute top-0 w-full" : "sticky top-0"
         )}
-        transition:name="header"
+        transition:name={isArticlePage ? "header-absolute" : "header-sticky"}
         transition:persist
       >
         <Header client:load currentPath={currentPath} />
@@ -48,10 +48,10 @@ const currentPath = Astro.url.pathname;
       {/* Główna treść */}
       <main
         class={cn(
-          mainClass,
-          headerPosition === "absolute" && "pt-16" // 64px offset for absolute header
+          isArticlePage ? "w-full" : mainClass,
+          isArticlePage && "pt-16" // 64px offset for absolute header
         )}
-        transition:name="main-content"
+        transition:name={isArticlePage ? "main-absolute" : "main-content"}
       >
         <slot />
       </main>
