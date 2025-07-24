@@ -1,0 +1,24 @@
+---
+import DashboardLayout from "../../layouts/DashboardLayout.astro";
+import ArticleEditorView from "../../components/views/ArticleEditorView.tsx";
+
+export const prerender = false;
+
+// Pobierz ID artykułu z parametrów URL
+const { id } = Astro.params;
+
+// Walidacja ID artykułu
+if (!id || typeof id !== "string") {
+  return Astro.redirect("/404");
+}
+
+// Sprawdź czy ID jest poprawnym UUID
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+if (!uuidRegex.test(id)) {
+  return Astro.redirect("/404");
+}
+---
+
+<DashboardLayout title="Edytor Artykułu" mainClass="w-full" headerPosition="absolute">
+  <ArticleEditorView client:load articleId={id} />
+</DashboardLayout>

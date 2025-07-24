@@ -2,15 +2,18 @@
 // Props Interface
 export interface Props {
   title?: string;
+  mainClass?: string;
+  headerPosition?: "sticky" | "absolute";
 }
 
-const { title = "Content Orbit" } = Astro.props;
+const { title = "Content Orbit", mainClass = "container mx-auto px-4 py-8", headerPosition = "sticky" } = Astro.props;
 
 // Import global styles
 import "../styles/global.css";
 import { ToasterProvider } from "../components/ToasterProvider";
 import { Header } from "../components/layout/Header";
 import { ClientRouter } from "astro:transitions";
+import { cn } from "@/lib/utils";
 
 // Get current path for navigation
 const currentPath = Astro.url.pathname;
@@ -29,12 +32,27 @@ const currentPath = Astro.url.pathname;
     <ClientRouter />
   </head>
   <body>
-    <div class="min-h-screen bg-background">
-      <!-- Header z nawigacją -->
-      <Header client:load currentPath={currentPath} transition:name="header" transition:persist />
+    <div class="min-h-screen bg-background relative">
+      {/* Header z nawigacją */}
+      <header
+        class={cn(
+          "bg-background border-b border-neutral-600 z-50 backdrop-blur-sm",
+          headerPosition === "sticky" ? "sticky top-0" : "absolute top-0 w-full"
+        )}
+        transition:name="header"
+        transition:persist
+      >
+        <Header client:load currentPath={currentPath} />
+      </header>
 
-      <!-- Główna treść -->
-      <main class="container mx-auto px-4 py-8" transition:name="main-content">
+      {/* Główna treść */}
+      <main
+        class={cn(
+          mainClass,
+          headerPosition === "absolute" && "pt-16" // 64px offset for absolute header
+        )}
+        transition:name="main-content"
+      >
         <slot />
       </main>
     </div>
