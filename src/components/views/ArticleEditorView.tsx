@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useArticleEditor } from "../hooks/useArticleEditor";
 import { LoadingSpinner } from "../shared/LoadingSpinner";
 import { AutosaveIndicator } from "../shared/AutosaveIndicator";
@@ -25,8 +25,28 @@ export const ArticleEditorView: React.FC<ArticleEditorViewProps> = ({ articleId 
     moveToSanity,
   } = useArticleEditor(articleId);
 
-  const toggleLeftPanel = () => setIsLeftPanelOpen((prev) => !prev);
-  const toggleRightPanel = () => setIsRightPanelOpen((prev) => !prev);
+  const toggleLeftPanel = useCallback(() => setIsLeftPanelOpen((prev) => !prev), []);
+  const toggleRightPanel = useCallback(() => setIsRightPanelOpen((prev) => !prev), []);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey) {
+        if (event.key === "[") {
+          event.preventDefault();
+          toggleLeftPanel();
+        } else if (event.key === "]") {
+          event.preventDefault();
+          toggleRightPanel();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [toggleLeftPanel, toggleRightPanel]);
 
   // Szkieletowy widok podczas ładowania
   if (isLoading) {

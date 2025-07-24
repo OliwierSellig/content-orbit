@@ -300,6 +300,29 @@
   }
 }
 
+@layer components {
+  .panel-resize-handle {
+    @apply w-2 bg-transparent transition-colors duration-200 ease-in-out relative flex items-center justify-center;
+  }
+  .panel-resize-handle[data-orientation="vertical"] {
+    @apply h-2 w-full;
+  }
+
+  .panel-resize-handle:hover,
+  .panel-resize-handle[data-dragging="true"] {
+    /* @apply bg-primary/10; */
+  }
+
+  .panel-resize-handle-bar {
+    @apply w-[3px] h-10 bg-neutral-700/50 rounded-full transition-colors duration-200 ease-in-out;
+  }
+
+  .panel-resize-handle:hover .panel-resize-handle-bar,
+  .panel-resize-handle[data-dragging="true"] .panel-resize-handle-bar {
+    /* @apply bg-primary/80; */
+  }
+}
+
 .custom-scrollbar::-webkit-scrollbar {
   width: 8px;
 }
