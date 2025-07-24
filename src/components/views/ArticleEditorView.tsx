@@ -4,6 +4,8 @@ import { LoadingSpinner } from "../shared/LoadingSpinner";
 import { AutosaveIndicator } from "../shared/AutosaveIndicator";
 import { ThreePanelLayout } from "../editor/layouts/ThreePanelLayout";
 import { MobileEditorTabs } from "../editor/layouts/MobileEditorTabs";
+import { ConfirmModal } from "../shared/ConfirmModal";
+import { Sparkles, Library, FileUp } from "lucide-react";
 
 interface ArticleEditorViewProps {
   articleId: string;
@@ -23,6 +25,8 @@ export const ArticleEditorView: React.FC<ArticleEditorViewProps> = ({ articleId 
     sendMessage,
     generateBody,
     moveToSanity,
+    modalState,
+    setModalState,
   } = useArticleEditor(articleId);
 
   const toggleLeftPanel = useCallback(() => setIsLeftPanelOpen((prev) => !prev), []);
@@ -48,81 +52,85 @@ export const ArticleEditorView: React.FC<ArticleEditorViewProps> = ({ articleId 
     };
   }, [toggleLeftPanel, toggleRightPanel]);
 
-  // Szkieletowy widok podczas ładowania
+  // Handle loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-neutral-900 via-neutral-900">
-        <div className="w-full py-12 px-6">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <LoadingSpinner />
-              <p className="text-neutral-400 mt-4">Ładowanie edytora artykułu...</p>
-            </div>
-          </div>
-        </div>
+      <div className="flex items-center justify-center h-screen">
+        <LoadingSpinner />
       </div>
     );
   }
 
-  // Widok błędu
+  // Handle error state
   if (error || !article) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-neutral-900 via-neutral-900">
-        <div className="w-full py-12 px-6">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <div className="text-red-400 mb-4 text-4xl">⚠️</div>
-              <h3 className="text-xl font-semibold mb-2 text-white">Wystąpił błąd</h3>
-              <p className="text-neutral-400 mb-6">{error || "Nie udało się załadować artykułu"}</p>
-              <button
-                onClick={() => window.location.reload()}
-                className="px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 hover:cursor-pointer focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:outline-none transition-all duration-200"
-              >
-                Spróbuj ponownie
-              </button>
-            </div>
-          </div>
-        </div>
+      <div className="flex items-center justify-center h-screen text-red-500">
+        <p>{error || "Nie udało się załadować artykułu."}</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-900 via-neutral-900">
-      <div className="w-full">
-        {/* Układ desktop - trzy panele */}
-        <ThreePanelLayout
-          article={article}
-          customAudits={customAudits}
-          onUpdateField={updateField}
-          onSendMessage={sendMessage}
-          onGenerateBody={generateBody}
-          onMoveToSanity={moveToSanity}
-          loadingStates={{
-            generating: loadingStates.generating,
-            movingToSanity: loadingStates.movingToSanity,
-          }}
-          isLeftPanelOpen={isLeftPanelOpen}
-          isRightPanelOpen={isRightPanelOpen}
-          onToggleLeftPanel={toggleLeftPanel}
-          onToggleRightPanel={toggleRightPanel}
-        />
+    <>
+      <div className="min-h-screen bg-gradient-to-br from-neutral-900 via-neutral-900">
+        <div className="w-full">
+          {/* Układ desktop - trzy panele */}
+          <ThreePanelLayout
+            article={article}
+            customAudits={customAudits}
+            onUpdateField={updateField}
+            onSendMessage={sendMessage}
+            onGenerateBody={() => setModalState({ ...modalState, generate: true })}
+            onMoveToSanity={() => setModalState({ ...modalState, sanity: true })}
+            loadingStates={{
+              generating: loadingStates.generating,
+              movingToSanity: loadingStates.movingToSanity,
+            }}
+            isLeftPanelOpen={isLeftPanelOpen}
+            isRightPanelOpen={isRightPanelOpen}
+            onToggleLeftPanel={toggleLeftPanel}
+            onToggleRightPanel={toggleRightPanel}
+          />
 
-        {/* Układ mobilny - zakładki */}
-        <MobileEditorTabs
-          article={article}
-          customAudits={customAudits}
-          onUpdateField={updateField}
-          onSendMessage={sendMessage}
-          onGenerateBody={generateBody}
-          onMoveToSanity={moveToSanity}
-          loadingStates={{
-            generating: loadingStates.generating,
-            movingToSanity: loadingStates.movingToSanity,
-          }}
-        />
+          {/* Układ mobilny - zakładki */}
+          <MobileEditorTabs
+            article={article}
+            customAudits={customAudits}
+            onUpdateField={updateField}
+            onSendMessage={sendMessage}
+            onGenerateBody={() => setModalState({ ...modalState, generate: true })}
+            onMoveToSanity={() => setModalState({ ...modalState, sanity: true })}
+            loadingStates={{
+              generating: loadingStates.generating,
+              movingToSanity: loadingStates.movingToSanity,
+            }}
+          />
+        </div>
       </div>
-    </div>
+      <ConfirmModal
+        isOpen={modalState.generate}
+        title="Generowanie treści artykułu"
+        description="Czy na pewno chcesz wygenerować treść dla tego artykułu? Spowoduje to nadpisanie obecnej treści."
+        onConfirm={generateBody}
+        onCancel={() => setModalState({ ...modalState, generate: false })}
+        confirmText="Generuj"
+        cancelText="Anuluj"
+        isConfirming={loadingStates.generating}
+        icon={<Sparkles className="w-5 h-5 text-sky-400" />}
+      />
+      <ConfirmModal
+        isOpen={modalState.sanity}
+        title="Przeniesienie do Sanity"
+        description="Czy na pewno chcesz przenieść ten artykuł do Sanity? Po przeniesieniu edycja w tym narzędziu zostanie zablokowana."
+        onConfirm={moveToSanity}
+        onCancel={() => setModalState({ ...modalState, sanity: false })}
+        confirmText="Przenieś"
+        cancelText="Anuluj"
+        isConfirming={loadingStates.movingToSanity}
+        variant="danger"
+        icon={<FileUp className="w-5 h-5 text-red-400" />}
+      />
+    </>
   );
 };
 

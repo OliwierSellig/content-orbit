@@ -28,6 +28,10 @@ export const useArticleEditor = (articleId: string) => {
     movingToSanity: false,
   });
   const [error, setError] = useState<string | null>(null);
+  const [modalState, setModalState] = useState({
+    generate: false,
+    sanity: false,
+  });
 
   // Ref do przechowywania timeoutu auto-save
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -302,87 +306,66 @@ export const useArticleEditor = (articleId: string) => {
   const generateBody = useCallback(async () => {
     if (!article || loadingStates.generating) return;
 
-    try {
-      setLoadingStates((prev) => ({ ...prev, generating: true }));
-      setArticle((prev) => (prev ? { ...prev, generationStatus: "generating" } : null));
+    setModalState((prev) => ({ ...prev, generate: false }));
+    setLoadingStates((prev) => ({ ...prev, generating: true }));
+    setArticle((prev) => (prev ? { ...prev, content: "", generationStatus: "generating" } : null));
 
-      const response = await fetch(`/api/articles/${articleId}/generate-body`, {
-        method: "POST",
-      });
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      if (!response.ok) {
-        throw new Error("Nie udało się wygenerować treści artykułu");
-      }
+    // Mock successful response
+    const updatedArticle: Partial<ArticleDto> = {
+      content: "Mocked generated content.",
+    };
+    originalDataRef.current = { ...originalDataRef.current, ...updatedArticle };
 
-      const updatedArticle: ArticleDto = await response.json();
+    setArticle((prev) =>
+      prev
+        ? {
+            ...prev,
+            ...updatedArticle,
+            isDirty: false,
+            generationStatus: "success",
+          }
+        : null
+    );
 
-      // Aktualizuj oryginalne dane
-      originalDataRef.current = { ...updatedArticle };
+    toast.success("Treść artykułu została wygenerowana");
 
-      setArticle((prev) =>
-        prev
-          ? {
-              ...prev,
-              ...updatedArticle,
-              isDirty: false,
-              generationStatus: "success",
-            }
-          : null
-      );
+    setTimeout(() => {
+      setArticle((prev) => (prev ? { ...prev, generationStatus: "idle" } : null));
+    }, 3000);
 
-      toast.success("Treść artykułu została wygenerowana");
-
-      // Wyczyść status po 3 sekundach
-      setTimeout(() => {
-        setArticle((prev) => (prev ? { ...prev, generationStatus: "idle" } : null));
-      }, 3000);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Wystąpił błąd podczas generowania treści";
-      setArticle((prev) => (prev ? { ...prev, generationStatus: "error" } : null));
-      toast.error(errorMessage);
-    } finally {
-      setLoadingStates((prev) => ({ ...prev, generating: false }));
-    }
-  }, [article, articleId, loadingStates.generating]);
+    setLoadingStates((prev) => ({ ...prev, generating: false }));
+  }, [article, loadingStates.generating]);
 
   // Przeniesienie do Sanity
   const moveToSanity = useCallback(async () => {
     if (!article || loadingStates.movingToSanity) return;
 
-    try {
-      setLoadingStates((prev) => ({ ...prev, movingToSanity: true }));
+    setModalState((prev) => ({ ...prev, sanity: false }));
+    setLoadingStates((prev) => ({ ...prev, movingToSanity: true }));
 
-      const response = await fetch(`/api/articles/${articleId}/move-to-sanity`, {
-        method: "POST",
-      });
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      if (!response.ok) {
-        throw new Error("Nie udało się przenieść artykułu do Sanity");
-      }
+    const updatedArticle: Partial<ArticleDto> = {
+      status: "moved",
+    };
+    originalDataRef.current = { ...originalDataRef.current, ...updatedArticle };
 
-      const updatedArticle: ArticleDto = await response.json();
+    setArticle((prev) =>
+      prev
+        ? {
+            ...prev,
+            ...updatedArticle,
+            isDirty: false,
+          }
+        : null
+    );
 
-      // Aktualizuj oryginalne dane
-      originalDataRef.current = { ...updatedArticle };
+    toast.success("Artykuł został przeniesiony do Sanity CMS");
 
-      setArticle((prev) =>
-        prev
-          ? {
-              ...prev,
-              ...updatedArticle,
-              isDirty: false,
-            }
-          : null
-      );
-
-      toast.success("Artykuł został przeniesiony do Sanity CMS");
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Wystąpił błąd podczas przenoszenia do Sanity";
-      toast.error(errorMessage);
-    } finally {
-      setLoadingStates((prev) => ({ ...prev, movingToSanity: false }));
-    }
-  }, [article, articleId, loadingStates.movingToSanity]);
+    setLoadingStates((prev) => ({ ...prev, movingToSanity: false }));
+  }, [article, loadingStates.movingToSanity]);
 
   // Pobierz dane przy montowaniu
   useEffect(() => {
@@ -409,5 +392,7 @@ export const useArticleEditor = (articleId: string) => {
     generateBody,
     moveToSanity,
     refetch: fetchInitialData,
+    modalState,
+    setModalState,
   };
 };

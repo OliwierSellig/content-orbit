@@ -41,6 +41,10 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   const editorRef = useRef<HTMLDivElement>(null);
   const hideTimeoutRef = useRef<number | null>(null);
 
+  const [loadingText, setLoadingText] = useState("");
+  const [showLoading, setShowLoading] = useState(false);
+  const fullLoadingText = "Chwileczkę, generuję dla Ciebie tekst...";
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -129,6 +133,25 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     };
   }, [editor]);
 
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (isLoading) {
+      setShowLoading(true);
+      let i = 0;
+      const interval = setInterval(() => {
+        setLoadingText(fullLoadingText.substring(0, i + 1));
+        i++;
+        if (i >= fullLoadingText.length) {
+          clearInterval(interval);
+        }
+      }, 25);
+      return () => clearInterval(interval);
+    } else {
+      timer = setTimeout(() => setShowLoading(false), 500); // Wait for fade out
+    }
+    return () => clearTimeout(timer);
+  }, [isLoading]);
+
   const handleHoverMenuMouseEnter = () => {
     if (hideTimeoutRef.current) {
       clearTimeout(hideTimeoutRef.current);
@@ -182,7 +205,19 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
           </button>
         </div>
       )}
-      {isLoading && <div className="p-4 text-neutral-400">Generowanie treści...</div>}
+      {showLoading && (
+        <div
+          className={cn(
+            "absolute inset-0 flex items-center justify-center bg-neutral-900/50 backdrop-blur-sm transition-opacity duration-500",
+            {
+              "opacity-100": isLoading,
+              "opacity-0": !isLoading,
+            }
+          )}
+        >
+          <p className="text-xl font-medium text-neutral-300 animate-pulse">{loadingText}</p>
+        </div>
+      )}
     </div>
   );
 };

@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { MarkdownEditor } from "../editors/MarkdownEditor";
 import { MetadataForm } from "../forms/MetadataForm";
 import type { ArticleEditorViewModel, CustomAuditDto, UpdateArticleCommand } from "../../../types";
-import { ActionPanel } from "../chat/ActionPanel";
 import { ChatPanel } from "../chat/ChatPanel";
 
 interface MobileEditorTabsProps {
@@ -60,12 +59,6 @@ export const MobileEditorTabs: React.FC<MobileEditorTabsProps> = ({
       <div className="bg-neutral-800/50 rounded-b-lg border border-neutral-700/50 border-t-0 p-6 min-h-[70vh] w-full">
         {activeTab === "actions" && (
           <div className="flex flex-col h-full">
-            <ActionPanel
-              onGenerateBody={onGenerateBody}
-              isLoading={loadingStates.generating}
-              disabled={article.isAiReplying}
-            />
-
             <ChatPanel
               history={article.chatHistory}
               onSendMessage={onSendMessage}
@@ -86,17 +79,7 @@ export const MobileEditorTabs: React.FC<MobileEditorTabsProps> = ({
           </div>
         )}
 
-        {activeTab === "metadata" && (
-          <div className="h-full">
-            <MetadataForm
-              article={article}
-              onFieldChange={onUpdateField}
-              disabled={article.isAiReplying}
-              isLoading={loadingStates.movingToSanity}
-              onMoveToSanity={onMoveToSanity}
-            />
-          </div>
-        )}
+        {activeTab === "metadata" && <div className="h-full"></div>}
       </div>
     </div>
   );

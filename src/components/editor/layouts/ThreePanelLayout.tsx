@@ -5,7 +5,6 @@ import { MarkdownEditor } from "../editors/MarkdownEditor";
 import { MetadataForm } from "../forms/MetadataForm";
 import type { ArticleEditorViewModel, CustomAuditDto, UpdateArticleCommand } from "@/types";
 import { ChatPanel } from "@/components/editor/chat/ChatPanel";
-import { ActionPanel } from "@/components/editor/chat/ActionPanel";
 import { cn } from "@/lib/utils";
 import { EditorToolbar } from "../common/EditorToolbar";
 import EditableTitle from "../common/EditableTitle";
@@ -116,11 +115,6 @@ export const ThreePanelLayout: React.FC<ThreePanelLayoutProps> = ({
               }
             )}
           >
-            <ActionPanel
-              onGenerateBody={onGenerateBody}
-              isLoading={loadingStates.generating}
-              disabled={article.isAiReplying}
-            />
             <ChatPanel
               history={article.chatHistory}
               onSendMessage={onSendMessage}
@@ -192,8 +186,10 @@ export const ThreePanelLayout: React.FC<ThreePanelLayoutProps> = ({
             <MetadataForm
               article={article}
               onFieldChange={onUpdateField}
+              onGenerateBody={onGenerateBody}
               disabled={article.isAiReplying}
               isLoading={loadingStates.movingToSanity}
+              isGenerating={loadingStates.generating}
               onMoveToSanity={onMoveToSanity}
             />
           </div>

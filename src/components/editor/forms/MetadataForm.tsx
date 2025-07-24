@@ -3,20 +3,25 @@ import type { ArticleEditorViewModel, UpdateArticleCommand } from "@/types";
 import { LoadingSpinner } from "../../shared/LoadingSpinner";
 import { SanityLogo } from "../../shared/SanityLogo";
 import { stripHtmlTags } from "@/lib/utils";
+import { GenerateBodyButton } from "./GenerateBodyButton";
 
 interface MetadataFormProps {
   article: ArticleEditorViewModel;
   onFieldChange: (field: keyof UpdateArticleCommand, value: string) => void;
+  onGenerateBody: () => void;
   disabled?: boolean;
   isLoading?: boolean;
+  isGenerating?: boolean;
   onMoveToSanity: () => void;
 }
 
 export const MetadataForm: React.FC<MetadataFormProps> = ({
   article,
   onFieldChange,
+  onGenerateBody,
   disabled = false,
   isLoading = false,
+  isGenerating = false,
   onMoveToSanity,
 }) => {
   return (
@@ -96,33 +101,22 @@ export const MetadataForm: React.FC<MetadataFormProps> = ({
           />
         </div>
 
-        {/* Przycisk przenoszenia do Sanity */}
         <div className="pt-4 border-t border-neutral-600">
+          <GenerateBodyButton onClick={onGenerateBody} isLoading={isGenerating} disabled={disabled} />
+        </div>
+
+        {/* Przycisk przenoszenia do Sanity */}
+        <div className="mb-4">
           <button
             onClick={onMoveToSanity}
             disabled={isLoading || article.status === "moved" || disabled}
-            className="group relative w-full flex justify-center items-center px-4 py-3 bg-black text-white rounded-md hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-black focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-neutral-400 focus-visible:outline-none transition-all duration-150 overflow-hidden cursor-pointer"
+            className="group relative w-full flex justify-center items-center px-4 py-3 bg-red-950 text-red-400 border border-red-800 rounded-md hover:bg-red-900 hover:border-red-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-red-950 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-red-500/50 focus-visible:outline-none transition-all duration-200 overflow-hidden cursor-pointer"
           >
-            <span className="absolute left-0 top-0 h-full w-0.5 bg-gradient-to-b from-transparent via-primary to-transparent transition-all duration-300 ease-in-out transform -translate-y-full group-hover:translate-y-0 group-disabled:group-hover:translate-y-0"></span>
+            <span className="absolute left-0 top-0 h-full w-0.5 bg-gradient-to-b from-transparent via-red-500 to-transparent transition-all duration-300 ease-in-out transform -translate-y-full group-hover:translate-y-0 group-disabled:group-hover:translate-y-0"></span>
             {isLoading ? (
               <>
-                <svg className="w-6 h-6 mr-3 animate-spin" viewBox="0 0 24 24">
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="none"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-                Przenoszenie...
+                <div className="w-6 h-6 mr-3 border-2 border-current/40 border-t-current rounded-full animate-spin"></div>
+                <span>Przenoszenie...</span>
               </>
             ) : article.status === "moved" ? (
               <>
@@ -131,11 +125,11 @@ export const MetadataForm: React.FC<MetadataFormProps> = ({
               </>
             ) : (
               <>
-                <SanityLogo className="w-6 h-6 mr-3 rounded-sm transition-transform ease-in-out duration-300 group-hover:scale-110 group-hover:rotate-[30deg]" />
+                <SanityLogo className="w-6 h-6 mr-3 text-white rounded-sm transition-transform ease-in-out duration-300 group-hover:scale-110 group-hover:rotate-12" />
                 Przenieś do Sanity
               </>
             )}
-            <span className="absolute right-0 top-0 h-full w-0.5 bg-gradient-to-t from-transparent via-primary to-transparent transition-all duration-300 ease-in-out transform translate-y-full group-hover:translate-y-0 group-disabled:group-hover:translate-y-full"></span>
+            <span className="absolute right-0 top-0 h-full w-0.5 bg-gradient-to-t from-transparent via-red-500 to-transparent transition-all duration-300 ease-in-out transform translate-y-full group-hover:translate-y-0 group-disabled:group-hover:translate-y-full"></span>
           </button>
         </div>
       </div>
