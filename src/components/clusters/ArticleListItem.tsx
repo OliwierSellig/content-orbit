@@ -17,11 +17,7 @@ export default function ArticleListItem({ article, onDeleteRequest }: ArticleLis
 
   // Determine article link based on status and slug
   const getArticleLink = () => {
-    if (article.status === "moved" && article.slug) {
-      // For moved articles, we might want to show the slug or external link
-      return `/articles/${article.slug}`;
-    }
-    // For concept and in_progress articles, link to the article editor/details
+    // All articles should link to the editor, regardless of status
     return `/articles/${article.id}`;
   };
 
@@ -63,6 +59,11 @@ export default function ArticleListItem({ article, onDeleteRequest }: ArticleLis
           <span className="text-sm pr-4 block text-neutral-300 group-hover:text-white transition-all duration-200 truncate font-medium transform translate-x-0 group-hover:translate-x-3">
             {article.name}
           </span>
+          {article.status === "moved" && (
+            <span className="text-xs text-green-400 bg-green-400/10 px-2 py-1 rounded-full border border-green-400/20 flex-shrink-0">
+              W Sanity CMS
+            </span>
+          )}
         </div>
         <div className="w-8 h-8 flex-shrink-0"></div> {/* Spacer for delete button */}
       </a>
