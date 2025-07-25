@@ -259,7 +259,7 @@ export const ConceptDetails: React.FC<ConceptDetailsProps> = ({
               </Button>
             </div>
             <Button asChild variant="primary" size="lg" className="group">
-              <a href={`/editor/${article.id}`}>
+              <a href={`/articles/${article.id}`}>
                 Przejdź do edytora
                 <ArrowRight className="w-4 h-4 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
               </a>

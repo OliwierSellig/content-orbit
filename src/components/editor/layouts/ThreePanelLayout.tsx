@@ -102,13 +102,16 @@ export const ThreePanelLayout: React.FC<ThreePanelLayoutProps> = ({
           onCollapse={() => {
             if (isLeftPanelOpen) onToggleLeftPanel();
           }}
-          className={cn({
-            "transition-all duration-200 ease-in-out h-[100vh] sticky top-0": !isDragging && !isSettling,
-          })}
+          className={cn(
+            "h-[100vh] sticky top-0", // Always keep height
+            {
+              "transition-all duration-200 ease-in-out sticky top-0": !isDragging && !isSettling,
+            }
+          )}
         >
           <div
             className={cn(
-              "w-full bg-neutral-800/20 border-r border-b rounded-br-md border-neutral-700/50 p-6 flex flex-col h-[100vh] sticky top-0 overflow-y-auto custom-scrollbar",
+              "w-full bg-neutral-800/20 border-r border-b rounded-br-md h-[100vh] border-neutral-700/50 p-6 flex flex-col min-h-[100vh] overflow-y-auto custom-scrollbar",
               {
                 "opacity-0": !isLeftPanelOpen,
                 "opacity-100 transition-opacity duration-200 ease-in-out": isLeftPanelOpen,
@@ -170,13 +173,16 @@ export const ThreePanelLayout: React.FC<ThreePanelLayoutProps> = ({
           onCollapse={() => {
             if (isRightPanelOpen) onToggleRightPanel();
           }}
-          className={cn({
-            "transition-all duration-200 ease-in-out h-[100vh] sticky top-0": !isDragging && !isSettling,
-          })}
+          className={cn(
+            "h-[100vh] sticky top-0", // Always keep height
+            {
+              "transition-all duration-200 ease-in-out sticky top-0": !isDragging && !isSettling,
+            }
+          )}
         >
           <div
             className={cn(
-              "w-full bg-neutral-800/20 border-l border-b rounded-bl-md border-neutral-700/50 p-6 flex flex-col h-[100vh] sticky top-0 overflow-y-auto custom-scrollbar",
+              "w-full bg-neutral-800/20 border-l  border-b rounded-bl-md h-[100vh] border-neutral-700/50 p-6 flex flex-col overflow-y-auto custom-scrollbar",
               {
                 "opacity-0": !isRightPanelOpen,
                 "opacity-100 transition-opacity duration-200 ease-in-out": isRightPanelOpen,
