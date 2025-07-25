@@ -9,7 +9,7 @@ function useSessionStorage<T>(key: string, initialValue: T): [T, Dispatch<SetSta
       const item = window.sessionStorage.getItem(key);
       return item ? (JSON.parse(item) as T) : initialValue;
     } catch (error) {
-      console.warn(`Error reading sessionStorage key “${key}”:`, error);
+      console.warn(`Error reading sessionStorage key "${key}":`, error);
       return initialValue;
     }
   }, [initialValue, key]);
@@ -19,7 +19,7 @@ function useSessionStorage<T>(key: string, initialValue: T): [T, Dispatch<SetSta
   const setValue: Dispatch<SetStateAction<T>> = useCallback(
     (value) => {
       if (typeof window === "undefined") {
-        console.warn(`Tried setting sessionStorage key “${key}” even though environment is not a client`);
+        console.warn(`Tried setting sessionStorage key "${key}" even though environment is not a client`);
         return;
       }
       try {
@@ -29,7 +29,7 @@ function useSessionStorage<T>(key: string, initialValue: T): [T, Dispatch<SetSta
           return newValue;
         });
       } catch (error) {
-        console.warn(`Error setting sessionStorage key “${key}”:`, error);
+        console.warn(`Error setting sessionStorage key "${key}":`, error);
       }
     },
     [key]

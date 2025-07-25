@@ -129,9 +129,9 @@ export const SubtopicManagement: React.FC<SubtopicManagementProps> = ({ onComple
       {state.error && <p className="text-destructive text-center p-4">{state.error}</p>}
 
       <Form {...form}>
-        <ScrollArea className="flex-grow pr-4 -mr-4 custom-scrollbar">
+        <ScrollArea className="flex-grow pr-4 -mr-4 custom-scrollbar overflow-y-auto">
           <Card className="bg-transparent border-none shadow-none">
-            <CardContent className="p-1">
+            <CardContent className="p-1 [&>*:first-child]:-mt-6">
               <ul className="space-y-2">
                 {fields.map((field, index) => (
                   <li key={field.id} className="flex items-center gap-2">

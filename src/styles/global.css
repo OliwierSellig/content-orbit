@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "node_modules/sonner/dist/styles.css";
 
 @theme {
   --color-neutral-200: #f0f7f7;
@@ -74,6 +75,19 @@
 
   html {
     overflow-y: scroll;
+  }
+
+  /* Fix modal layout shift by preventing scrollbar compensation when scrollbar is always visible */
+  body[data-scroll-locked],
+  body[style*="padding-right"],
+  body[style*="margin-right"] {
+    padding-right: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* Ensure body scroll prevention still works */
+  body[data-scroll-locked] {
+    overflow: hidden !important;
   }
 
   body {

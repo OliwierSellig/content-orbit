@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import type { NavItem } from "@/types";
 
@@ -11,8 +11,29 @@ interface NavLinkProps {
 }
 
 export function NavLink({ item, currentPath, className, onClick, variant = "desktop" }: NavLinkProps) {
-  const isActive = currentPath === item.href || currentPath.startsWith(item.href + "/");
+  const [activePath, setActivePath] = useState(currentPath);
+
+  // Function to check if link is active
+  const isActive = activePath === item.href || activePath.startsWith(item.href + "/");
   const Icon = item.icon;
+
+  useEffect(() => {
+    // Set initial path
+    setActivePath(window.location.pathname);
+
+    // Listen for View Transitions page loads to update active state
+    const handlePageLoad = () => {
+      setActivePath(window.location.pathname);
+    };
+
+    // Add event listener for astro:page-load (fires on initial load and after navigation)
+    document.addEventListener("astro:page-load", handlePageLoad);
+
+    // Cleanup event listener
+    return () => {
+      document.removeEventListener("astro:page-load", handlePageLoad);
+    };
+  }, []);
 
   const desktopStyles = {
     base: "hover:bg-white/10 hover:text-white",

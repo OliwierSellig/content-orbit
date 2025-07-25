@@ -14,6 +14,7 @@ import type { TopicClusterDto } from "../../types";
 import { TopicChoice } from "./steps/TopicChoice";
 import { TopicSelection } from "./steps/TopicSelection";
 import { SubtopicManagement } from "./steps/SubtopicManagement";
+import { LoadingSpinner } from "../shared/LoadingSpinner";
 
 interface TopicCreationWizardProps {
   isOpen: boolean;
@@ -42,6 +43,27 @@ export const TopicCreationWizard: React.FC<TopicCreationWizardProps> = ({
   };
 
   const renderStep = () => {
+    // Show loading state when generating subtopics after cluster/topic selection
+    if (
+      state.isLoading &&
+      (state.step === "topic_selection_existing" ||
+        state.step === "topic_selection_ai" ||
+        state.step === "topic_selection_manual")
+    ) {
+      return (
+        <div className="flex flex-col items-center justify-center py-12 space-y-6">
+          <LoadingSpinner />
+          <div className="text-center space-y-2">
+            <h3 className="text-lg font-semibold text-white">Generowanie podtematów...</h3>
+            <p className="text-neutral-400 text-sm">
+              Tworzę propozycje podtematów dla tematu:{" "}
+              <span className="font-medium text-white">"{state.selectedTopicName}"</span>
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     switch (state.step) {
       case "topic_choice":
         return <TopicChoice />;
@@ -63,6 +85,16 @@ export const TopicCreationWizard: React.FC<TopicCreationWizardProps> = ({
   };
 
   const getTitleForStep = () => {
+    // Show loading title when generating subtopics
+    if (
+      state.isLoading &&
+      (state.step === "topic_selection_existing" ||
+        state.step === "topic_selection_ai" ||
+        state.step === "topic_selection_manual")
+    ) {
+      return "Generowanie podtematów";
+    }
+
     switch (state.step) {
       case "topic_choice":
         return "Wybierz metodę";
@@ -80,6 +112,16 @@ export const TopicCreationWizard: React.FC<TopicCreationWizardProps> = ({
   };
 
   const getDescriptionForStep = () => {
+    // Show loading description when generating subtopics
+    if (
+      state.isLoading &&
+      (state.step === "topic_selection_existing" ||
+        state.step === "topic_selection_ai" ||
+        state.step === "topic_selection_manual")
+    ) {
+      return "Analizuję wybrany temat i tworzę listę propozycji podtematów...";
+    }
+
     switch (state.step) {
       case "topic_choice":
         return "Wybierz preferowaną metodę, aby rozpocząć proces tworzenia nowego klastra tematycznego.";
@@ -109,7 +151,7 @@ export const TopicCreationWizard: React.FC<TopicCreationWizardProps> = ({
           }
         }}
       >
-        <DialogContent className="sm:max-w-[850px] h-auto md:h-[70vh] flex flex-col bg-neutral-800/95 backdrop-blur-md border-2 border-neutral-700/50 rounded-2xl shadow-2xl">
+        <DialogContent className="sm:max-w-[850px] h-auto md:h-[85vh] max-h-[50rem] flex flex-col bg-neutral-800/95 backdrop-blur-md border-2 border-neutral-700/50 rounded-2xl shadow-2xl">
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent opacity-60"></div>
           <DialogHeader className="space-y-4 pb-2 text-left">
             <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-white to-neutral-300 bg-clip-text text-transparent">

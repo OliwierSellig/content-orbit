@@ -124,8 +124,8 @@ export const ConceptDetails: React.FC<ConceptDetailsProps> = ({
 
   return (
     <Form {...form}>
-      <form className="h-full">
-        <Card className="h-full flex flex-col border border-neutral-700/50 bg-neutral-800/50 rounded-2xl">
+      <form>
+        <Card className="flex flex-col border border-neutral-700/50 bg-neutral-800/50 rounded-2xl">
           <CardHeader>
             <FormField
               control={form.control}
@@ -146,7 +146,7 @@ export const ConceptDetails: React.FC<ConceptDetailsProps> = ({
               )}
             />
           </CardHeader>
-          <CardContent className="flex-grow">
+          <CardContent>
             <Tabs defaultValue="content" className="w-full">
               <TabsList className="grid w-full grid-cols-2 border-b border-neutral-700/60 rounded-none bg-transparent p-0">
                 <TabsTrigger

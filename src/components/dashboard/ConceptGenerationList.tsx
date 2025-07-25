@@ -68,7 +68,7 @@ export const ConceptGenerationList: React.FC<ConceptGenerationListProps> = ({
       }
       return subtopics[0] ?? null;
     });
-  }, [subtopics, generationResults, setSessionState]);
+  }, [subtopics, setSessionState]);
 
   const generateConcept = useCallback(
     async (subtopicName: string) => {
@@ -192,13 +192,15 @@ export const ConceptGenerationList: React.FC<ConceptGenerationListProps> = ({
     [generationResults, setSessionState]
   );
 
+  // Effect to start concept generation for pending subtopics - only when subtopics change
   useEffect(() => {
     subtopics.forEach((subtopic) => {
-      if (!generationResults[subtopic] || generationResults[subtopic].status === "pending") {
+      const result = generationResults[subtopic];
+      if (!result || result.status === "pending") {
         generateConcept(subtopic);
       }
     });
-  }, [subtopics, generationResults, generateConcept]);
+  }, [subtopics, generateConcept]); // generateConcept is stable due to useCallback
 
   const handleSelectSubtopic = (subtopicName: string) => {
     setSelectedSubtopic(subtopicName);
@@ -289,6 +291,7 @@ export const ConceptGenerationList: React.FC<ConceptGenerationListProps> = ({
       const currentIndex = prevState.subtopics.findIndex((s) => s === selectedSubtopic);
       const nextSubtopic = newSubtopics[currentIndex] || newSubtopics[currentIndex - 1] || null;
       setSelectedSubtopic(nextSubtopic);
+
       return { ...prevState, subtopics: newSubtopics, generationResults: newResults };
     });
     setIsDeleteModalOpen(false);

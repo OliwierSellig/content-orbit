@@ -38,34 +38,36 @@ const AiSuggestionTiles: React.FC = () => {
   if (state.error) return <div className="text-destructive text-center p-8">{state.error}</div>;
 
   return (
-    <ScrollArea className="h-[50vh] pr-4 -mr-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {state.suggestions.map((suggestion: string) => (
-          <div
-            key={suggestion}
-            onClick={() => actions.selectTopic(suggestion)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") actions.selectTopic(suggestion);
-            }}
-            className="group relative p-6 rounded-xl cursor-pointer transition-colors duration-300 ease-in-out overflow-hidden
-                       bg-neutral-200 
-                       border border-neutral-500
-                       hover:border-primary/70
-                       focus:outline-none focus-visible:ring-2 focus-visible:ring-primary 
-                       focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900"
-          >
-            <div className="relative flex items-center justify-center w-full h-full">
-              <ArrowRight className="absolute left-0 h-5 w-5 text-neutral-700 opacity-0 -translate-x-full transition-all duration-300 ease-in-out group-hover:opacity-100 group-hover:translate-x-6" />
-              <p className="font-semibold text-center text-neutral-800 transition-transform duration-300 ease-in-out group-hover:translate-x-4">
-                {suggestion}
-              </p>
+    <div className="flex-1 flex flex-col min-h-0">
+      <ScrollArea className="flex-1  pr-4 -mr-4 overflow-y-auto custom-scrollbar">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {state.suggestions.map((suggestion: string) => (
+            <div
+              key={suggestion}
+              onClick={() => actions.selectTopic(suggestion)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") actions.selectTopic(suggestion);
+              }}
+              className="group relative p-6 rounded-xl cursor-pointer transition-colors duration-300 ease-in-out overflow-hidden
+                         bg-neutral-200 
+                         border border-neutral-500
+                         hover:border-primary/70
+                         focus:outline-none focus-visible:ring-2 focus-visible:ring-primary 
+                         focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900"
+            >
+              <div className="relative flex items-center justify-center w-full h-full">
+                <ArrowRight className="absolute left-0 h-5 w-5 text-neutral-700 opacity-0 -translate-x-full transition-all duration-300 ease-in-out group-hover:opacity-100 group-hover:translate-x-6" />
+                <p className="font-semibold text-center text-neutral-800 transition-transform duration-300 ease-in-out group-hover:translate-x-4">
+                  {suggestion}
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
-    </ScrollArea>
+          ))}
+        </div>
+      </ScrollArea>
+    </div>
   );
 };
 

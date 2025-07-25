@@ -28,7 +28,7 @@ const isArticlePage = currentPath.startsWith("/articles/");
     <link rel="icon" type="image/png" href="/favicon.png" />
     <title>{title}</title>
 
-    <!-- Enable View Transitions for smooth page navigation -->
+    <!-- Enable View Transitions for smooth page navigation (maybe for later) -->
     <ClientRouter />
   </head>
   <body>
@@ -40,7 +40,6 @@ const isArticlePage = currentPath.startsWith("/articles/");
           isArticlePage ? "absolute top-0 w-full" : "sticky top-0"
         )}
         transition:name={isArticlePage ? "header-absolute" : "header-sticky"}
-        transition:persist
       >
         <Header client:load currentPath={currentPath} />
       </header>

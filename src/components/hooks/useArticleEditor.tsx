@@ -1,15 +1,14 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import type {
   ArticleDto,
   ArticleEditorViewModel,
+  UpdateArticleCommand,
+  CustomAuditDto,
   ChatMessage,
   ArticleChatCommand,
-  CustomAuditDto,
-  UpdateArticleCommand,
 } from "../../types";
 
-// Stan loading dla różnych operacji
 interface LoadingStates {
   fetching: boolean;
   saving: boolean;
@@ -39,6 +38,32 @@ export const useArticleEditor = (articleId: string) => {
   // Ref do przechowywania oryginalnych danych artykułu dla porównania
   const originalDataRef = useRef<Partial<ArticleDto> | null>(null);
 
+  // Helper functions for chat history session storage
+  const getChatHistoryKey = useCallback(() => `article-chat-${articleId}`, [articleId]);
+
+  const loadChatHistory = useCallback((): ChatMessage[] => {
+    if (typeof window === "undefined") return [];
+    try {
+      const stored = window.sessionStorage.getItem(getChatHistoryKey());
+      return stored ? JSON.parse(stored) : [];
+    } catch (error) {
+      console.warn("Error loading chat history:", error);
+      return [];
+    }
+  }, [getChatHistoryKey]);
+
+  const saveChatHistory = useCallback(
+    (history: ChatMessage[]) => {
+      if (typeof window === "undefined") return;
+      try {
+        window.sessionStorage.setItem(getChatHistoryKey(), JSON.stringify(history));
+      } catch (error) {
+        console.warn("Error saving chat history:", error);
+      }
+    },
+    [getChatHistoryKey]
+  );
+
   // Konwertuje ArticleDto na ArticleEditorViewModel
   const convertToViewModel = useCallback((articleData: ArticleDto): ArticleEditorViewModel => {
     return {
@@ -46,7 +71,7 @@ export const useArticleEditor = (articleId: string) => {
       isDirty: false,
       autosaveStatus: "idle",
       generationStatus: "idle",
-      chatHistory: [],
+      chatHistory: [], // Will be set separately after loading
       isAiReplying: false,
     };
   }, []);
@@ -68,13 +93,77 @@ export const useArticleEditor = (articleId: string) => {
     return fieldsToCheck.some((field) => currentData[field] !== originalDataRef.current![field]);
   }, []);
 
-  // Pobieranie początkowych danych
-  const fetchInitialData = useCallback(async () => {
+  // Funkcja auto-save z debounce
+  const scheduleAutoSave = useCallback(
+    (data: Partial<UpdateArticleCommand>) => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+
+      setArticle((prev) => (prev ? { ...prev, autosaveStatus: "saving" } : null));
+
+      autoSaveTimeoutRef.current = setTimeout(async () => {
+        try {
+          const response = await fetch(`/api/articles/${articleId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+
+          if (response.ok) {
+            const updatedArticle: ArticleDto = await response.json();
+            originalDataRef.current = updatedArticle;
+
+            setArticle((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    ...updatedArticle,
+                    isDirty: false,
+                    autosaveStatus: "success",
+                  }
+                : null
+            );
+
+            setTimeout(() => {
+              setArticle((prev) => (prev ? { ...prev, autosaveStatus: "idle" } : null));
+            }, 2000);
+          } else {
+            throw new Error("Nie udało się zapisać zmian");
+          }
+        } catch (err) {
+          setArticle((prev) => (prev ? { ...prev, autosaveStatus: "error" } : null));
+          toast.error("Błąd podczas zapisywania zmian");
+        }
+      }, 1000);
+    },
+    [articleId]
+  );
+
+  // Aktualizuje pojedyncze pole artykułu
+  const updateField = useCallback(
+    (field: keyof UpdateArticleCommand, value: string) => {
+      setArticle((prev) => {
+        if (!prev) return null;
+
+        const updatedData = { ...prev, [field]: value };
+        const isDirty = checkIsDirty(updatedData);
+
+        if (isDirty) {
+          scheduleAutoSave({ [field]: value });
+        }
+
+        return { ...updatedData, isDirty };
+      });
+    },
+    [checkIsDirty, scheduleAutoSave]
+  );
+
+  // Pobieranie danych artykułu i audytów
+  const fetchData = useCallback(async () => {
     try {
       setLoadingStates((prev) => ({ ...prev, fetching: true }));
-      setError(null);
 
-      // Pobierz artykuł i custom audits równolegle
       const [articleResponse, auditsResponse] = await Promise.all([
         fetch(`/api/articles/${articleId}`),
         fetch("/api/custom-audits"),
@@ -84,103 +173,36 @@ export const useArticleEditor = (articleId: string) => {
         throw new Error("Nie udało się pobrać artykułu");
       }
 
-      if (!auditsResponse.ok) {
-        throw new Error("Nie udało się pobrać audytów");
-      }
-
       const articleData: ArticleDto = await articleResponse.json();
-      const auditsData: CustomAuditDto[] = await auditsResponse.json();
+      const auditsData: CustomAuditDto[] = auditsResponse.ok ? await auditsResponse.json() : [];
 
-      // Zapisz oryginalne dane do porównania
-      originalDataRef.current = { ...articleData };
-
-      // Konwertuj na view model
+      originalDataRef.current = articleData;
       const viewModel = convertToViewModel(articleData);
 
-      setArticle(viewModel);
+      // Load chat history from session storage and set it
+      const chatHistory = loadChatHistory();
+      setArticle({ ...viewModel, chatHistory });
       setCustomAudits(auditsData);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Wystąpił nieoczekiwany błąd";
-      setError(errorMessage);
-      toast.error(errorMessage);
+      setError(err instanceof Error ? err.message : "Wystąpił błąd");
     } finally {
       setLoadingStates((prev) => ({ ...prev, fetching: false }));
     }
-  }, [articleId, convertToViewModel]);
+  }, [articleId, convertToViewModel, loadChatHistory]);
 
-  // Auto-save funkcjonalność
-  const performAutoSave = useCallback(
-    async (dataToSave: UpdateArticleCommand) => {
-      if (!article) return;
+  // Effect do pobierania danych przy inicjalizacji
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-      try {
-        setArticle((prev) => (prev ? { ...prev, autosaveStatus: "saving" } : null));
-
-        const response = await fetch(`/api/articles/${articleId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(dataToSave),
-        });
-
-        if (!response.ok) {
-          throw new Error("Nie udało się zapisać zmian");
-        }
-
-        const updatedArticle: ArticleDto = await response.json();
-
-        // Aktualizuj oryginalne dane
-        originalDataRef.current = { ...updatedArticle };
-
-        setArticle((prev) =>
-          prev
-            ? {
-                ...prev,
-                ...updatedArticle,
-                isDirty: false,
-                autosaveStatus: "success",
-              }
-            : null
-        );
-
-        // Wyczyść status po 2 sekundach
-        setTimeout(() => {
-          setArticle((prev) => (prev ? { ...prev, autosaveStatus: "idle" } : null));
-        }, 2000);
-      } catch (err) {
-        setArticle((prev) => (prev ? { ...prev, autosaveStatus: "error" } : null));
-        toast.error("Nie udało się zapisać zmian automatycznie");
-      }
-    },
-    [article, articleId]
-  );
-
-  // Aktualizacja pola artykułu z auto-save
-  const updateField = useCallback(
-    (field: keyof UpdateArticleCommand, value: string) => {
-      if (!article) return;
-
-      setArticle((prev) => {
-        if (!prev) return null;
-
-        const updated = { ...prev, [field]: value };
-        const isDirty = checkIsDirty(updated);
-
-        return { ...updated, isDirty };
-      });
-
-      // Anuluj poprzedni timeout
+  // Cleanup timeout przy odmontowaniu
+  useEffect(() => {
+    return () => {
       if (autoSaveTimeoutRef.current) {
         clearTimeout(autoSaveTimeoutRef.current);
       }
-
-      // Ustaw nowy timeout na auto-save
-      autoSaveTimeoutRef.current = setTimeout(() => {
-        const dataToSave: UpdateArticleCommand = { [field]: value };
-        performAutoSave(dataToSave);
-      }, 1000); // 1 sekunda debounce
-    },
-    [article, checkIsDirty, performAutoSave]
-  );
+    };
+  }, []);
 
   // Wysyłanie wiadomości w czacie
   const sendMessage = useCallback(
@@ -193,12 +215,16 @@ export const useArticleEditor = (articleId: string) => {
         content: message,
       };
 
+      // Create new chat history with user message
+      const newChatHistory = [...article.chatHistory, userMessage];
+      saveChatHistory(newChatHistory); // Save to session storage
+
       // Dodaj wiadomość użytkownika
       setArticle((prev) =>
         prev
           ? {
               ...prev,
-              chatHistory: [...prev.chatHistory, userMessage],
+              chatHistory: newChatHistory,
               isAiReplying: true,
             }
           : null
@@ -207,7 +233,7 @@ export const useArticleEditor = (articleId: string) => {
       try {
         const chatCommand: ArticleChatCommand = {
           message,
-          history: article.chatHistory.map((msg) => ({ role: msg.role, content: msg.content })),
+          history: newChatHistory.slice(0, -1).map((msg) => ({ role: msg.role, content: msg.content })), // Exclude the current message from history
         };
 
         const response = await fetch(`/api/articles/${articleId}/chat`, {
@@ -232,12 +258,16 @@ export const useArticleEditor = (articleId: string) => {
           content: "",
         };
 
+        // Add empty assistant message to chat history
+        const chatWithAssistant = [...newChatHistory, assistantMessage];
+        saveChatHistory(chatWithAssistant);
+
         // Dodaj pustą wiadomość asystenta
         setArticle((prev) =>
           prev
             ? {
                 ...prev,
-                chatHistory: [...prev.chatHistory, assistantMessage],
+                chatHistory: chatWithAssistant,
               }
             : null
         );
@@ -262,11 +292,14 @@ export const useArticleEditor = (articleId: string) => {
                 const parsed = JSON.parse(data);
                 if (parsed.text) {
                   assistantMessage.content += " " + parsed.text;
+
+                  // Update chat history in session storage
+                  const updatedHistory = [...newChatHistory, { ...assistantMessage }];
+                  saveChatHistory(updatedHistory);
+
                   // Aktualizuj ostatnią wiadomość asystenta
                   setArticle((prev) => {
                     if (!prev) return null;
-                    const updatedHistory = [...prev.chatHistory];
-                    updatedHistory[updatedHistory.length - 1] = { ...assistantMessage };
                     return { ...prev, chatHistory: updatedHistory };
                   });
                 }
@@ -286,11 +319,14 @@ export const useArticleEditor = (articleId: string) => {
           content: `Przepraszam, wystąpił błąd: ${errorMessage}`,
         };
 
+        const chatWithError = [...newChatHistory, errorMessage_chat];
+        saveChatHistory(chatWithError); // Save to session storage
+
         setArticle((prev) =>
           prev
             ? {
                 ...prev,
-                chatHistory: [...prev.chatHistory, errorMessage_chat],
+                chatHistory: chatWithError,
                 isAiReplying: false,
               }
             : null
@@ -299,87 +335,89 @@ export const useArticleEditor = (articleId: string) => {
         toast.error(errorMessage);
       }
     },
-    [article, articleId]
+    [article, articleId, saveChatHistory]
   );
 
   // Generowanie treści artykułu
   const generateBody = useCallback(async () => {
-    if (!article || loadingStates.generating) return;
+    if (!article) return;
 
-    setModalState((prev) => ({ ...prev, generate: false }));
-    setLoadingStates((prev) => ({ ...prev, generating: true }));
-    setArticle((prev) => (prev ? { ...prev, content: "", generationStatus: "generating" } : null));
+    try {
+      setLoadingStates((prev) => ({ ...prev, generating: true }));
+      setArticle((prev) => (prev ? { ...prev, generationStatus: "generating" } : null));
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await fetch(`/api/articles/${articleId}/generate-body`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
 
-    // Mock successful response
-    const updatedArticle: Partial<ArticleDto> = {
-      content: "Mocked generated content.",
-    };
-    originalDataRef.current = { ...originalDataRef.current, ...updatedArticle };
-
-    setArticle((prev) =>
-      prev
-        ? {
-            ...prev,
-            ...updatedArticle,
-            isDirty: false,
-            generationStatus: "success",
-          }
-        : null
-    );
-
-    toast.success("Treść artykułu została wygenerowana");
-
-    setTimeout(() => {
-      setArticle((prev) => (prev ? { ...prev, generationStatus: "idle" } : null));
-    }, 3000);
-
-    setLoadingStates((prev) => ({ ...prev, generating: false }));
-  }, [article, loadingStates.generating]);
-
-  // Przeniesienie do Sanity
-  const moveToSanity = useCallback(async () => {
-    if (!article || loadingStates.movingToSanity) return;
-
-    setModalState((prev) => ({ ...prev, sanity: false }));
-    setLoadingStates((prev) => ({ ...prev, movingToSanity: true }));
-
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    const updatedArticle: Partial<ArticleDto> = {
-      status: "moved",
-    };
-    originalDataRef.current = { ...originalDataRef.current, ...updatedArticle };
-
-    setArticle((prev) =>
-      prev
-        ? {
-            ...prev,
-            ...updatedArticle,
-            isDirty: false,
-          }
-        : null
-    );
-
-    toast.success("Artykuł został przeniesiony do Sanity CMS");
-
-    setLoadingStates((prev) => ({ ...prev, movingToSanity: false }));
-  }, [article, loadingStates.movingToSanity]);
-
-  // Pobierz dane przy montowaniu
-  useEffect(() => {
-    fetchInitialData();
-  }, [fetchInitialData]);
-
-  // Cleanup timeoutu przy unmount
-  useEffect(() => {
-    return () => {
-      if (autoSaveTimeoutRef.current) {
-        clearTimeout(autoSaveTimeoutRef.current);
+      if (!response.ok) {
+        throw new Error("Nie udało się wygenerować treści");
       }
-    };
-  }, []);
+
+      const updatedArticle: ArticleDto = await response.json();
+      originalDataRef.current = updatedArticle;
+
+      setArticle((prev) =>
+        prev
+          ? {
+              ...prev,
+              ...updatedArticle,
+              isDirty: false,
+              generationStatus: "success",
+            }
+          : null
+      );
+
+      toast.success("Treść została pomyślnie wygenerowana");
+
+      setTimeout(() => {
+        setArticle((prev) => (prev ? { ...prev, generationStatus: "idle" } : null));
+      }, 2000);
+    } catch (err) {
+      setArticle((prev) => (prev ? { ...prev, generationStatus: "error" } : null));
+      toast.error("Błąd podczas generowania treści");
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, generating: false }));
+    }
+  }, [article, articleId]);
+
+  // Przenoszenie artykułu do Sanity
+  const moveToSanity = useCallback(async () => {
+    if (!article) return;
+
+    try {
+      setLoadingStates((prev) => ({ ...prev, movingToSanity: true }));
+
+      const response = await fetch(`/api/articles/${articleId}/move-to-sanity`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!response.ok) {
+        throw new Error("Nie udało się przenieść artykułu");
+      }
+
+      const updatedArticle: ArticleDto = await response.json();
+      originalDataRef.current = updatedArticle;
+
+      setArticle((prev) =>
+        prev
+          ? {
+              ...prev,
+              ...updatedArticle,
+              isDirty: false,
+            }
+          : null
+      );
+
+      toast.success("Artykuł został pomyślnie przeniesiony do Sanity");
+    } catch (err) {
+      toast.error("Błąd podczas przenoszenia artykułu");
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, movingToSanity: false }));
+    }
+  }, [article, articleId]);
 
   return {
     article,
@@ -391,7 +429,6 @@ export const useArticleEditor = (articleId: string) => {
     sendMessage,
     generateBody,
     moveToSanity,
-    refetch: fetchInitialData,
     modalState,
     setModalState,
   };
